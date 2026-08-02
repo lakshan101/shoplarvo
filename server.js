@@ -39,30 +39,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve frontend build in production mode (Vite client/dist or React client/build)
-const distPath = path.join(__dirname, 'client', 'dist');
-const buildPath = path.join(__dirname, 'client', 'build');
-
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.resolve(distPath, 'index.html'));
-  });
-} else if (fs.existsSync(buildPath)) {
-  app.use(express.static(buildPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.resolve(buildPath, 'index.html'));
-  });
-}
-
 // Global Error Handler
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`[ShopLarvo Server] Running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
-  console.log(`[ShopLarvo API] Health Endpoint: http://localhost:${PORT}/api/health`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`[ShopLarvo Server] Running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+    console.log(`[ShopLarvo API] Health Endpoint: http://localhost:${PORT}/api/health`);
+  });
+}
+
+module.exports = app;
