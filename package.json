@@ -1,12 +1,14 @@
 {
-  "name": "stylehub-smart-clothing-shop-management-system",
+  "name": "shoplarvo-smart-clothing-shop-management-system",
   "version": "1.0.0",
-  "description": "StyleHub - Smart Clothing Shop Management System Backend Server",
+  "description": "ShopLarvo - Smart Clothing Shop Management System Server",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
+    "build": "cd client && npm install && npm run build",
+    "vercel-build": "cd client && npm install && npm run build",
     "seed": "node seed/seeder.js"
   },
   "dependencies": {
