@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const { errorHandler } = require('./middleware/errorMiddleware');
@@ -33,16 +34,26 @@ app.use('/api/recommendations', require('./routes/recommendationRoutes'));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'OK',
-    system: 'StyleHub - Smart Clothing Shop Management System API',
+    system: 'ShopLarvo - Smart Clothing Shop Management System API',
     timestamp: new Date().toISOString()
   });
 });
 
-// Serve frontend build in production mode if built
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, 'client/build')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
+// Serve frontend build in production mode (Vite client/dist or React client/build)
+const distPath = path.join(__dirname, 'client', 'dist');
+const buildPath = path.join(__dirname, 'client', 'build');
+
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.resolve(distPath, 'index.html'));
+  });
+} else if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.resolve(buildPath, 'index.html'));
   });
 }
 
@@ -52,6 +63,6 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`[StyleHub Server] Running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
-  console.log(`[StyleHub API] Health Endpoint: http://localhost:${PORT}/api/health`);
+  console.log(`[ShopLarvo Server] Running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode.`);
+  console.log(`[ShopLarvo API] Health Endpoint: http://localhost:${PORT}/api/health`);
 });
