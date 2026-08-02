@@ -149,7 +149,7 @@ Add the following DNS records in your domain registrar (Porkbun / Namecheap):
 | **A Record** | `@` | `216.198.79.1` |
 | **CNAME Record** | `www` | `3a53a5efc165266b.vercel-dns-017.com.` |
 
----
+----
 
 ## 📄 License & Copyright
 
