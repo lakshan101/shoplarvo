@@ -64,7 +64,7 @@ const createOrder = async (req, res, next) => {
         createdAt: new Date()
       };
       memoryOrders.unshift(newOrder);
-      return res.status(201).json({ success: true, message: 'Order placed successfully (Demo)', order: newOrder });
+      return res.status(201).json({ success: true, message: 'Order placed successfully', order: newOrder });
     }
   } catch (error) {
     next(error);

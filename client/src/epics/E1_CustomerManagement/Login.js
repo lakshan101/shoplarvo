@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
-import { Lock, Mail, ArrowRight, ShieldCheck, UserCheck, AlertCircle, Gem, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, Gem, ArrowLeft } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -26,15 +26,6 @@ export default function Login() {
       navigate('/');
     } else {
       setError(res.message || 'Login failed. Please check credentials.');
-    }
-  };
-
-  const handleDemoLogin = async (demoEmail, demoPassword) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    const res = await login(demoEmail, demoPassword);
-    if (res.success) {
-      navigate('/');
     }
   };
 
@@ -143,27 +134,6 @@ export default function Login() {
                 {loading ? 'Authenticating...' : <>SIGN IN TO ACCOUNT <ArrowRight className="w-4 h-4" /></>}
               </button>
             </form>
-
-            {/* Instant Demo Quick Logins */}
-            <div className="pt-6 border-t border-slate-200">
-              <p className="text-[11px] font-bold text-slate-500 text-center mb-3">Instant One-Click Demo Logins</p>
-              <div className="grid grid-cols-2 gap-3">
-                <button 
-                  type="button"
-                  onClick={() => handleDemoLogin('sarah@example.com', 'SarahStyle#2026')}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5"
-                >
-                  <UserCheck className="w-4 h-4 text-blue-600" /> Customer Demo
-                </button>
-                <button 
-                  type="button"
-                  onClick={() => handleDemoLogin('admin@stylehub.com', 'AdminStyle#2026')}
-                  className="px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 hover:bg-slate-900 hover:text-white transition-all flex items-center justify-center gap-1.5"
-                >
-                  <ShieldCheck className="w-4 h-4 text-purple-600" /> Admin Demo
-                </button>
-              </div>
-            </div>
 
             <p className="text-center text-xs text-slate-500 pt-2">
               Don't have an account yet?{' '}
