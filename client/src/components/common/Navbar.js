@@ -22,9 +22,9 @@ export default function Navbar() {
       const currentScrollY = window.scrollY;
       if (currentScrollY > 120) {
         if (currentScrollY > lastScrollY) {
-          setHiddenNav(true); // Hide when scrolling down
+          setHiddenNav(true);
         } else if (currentScrollY < 250) {
-          setHiddenNav(false); // Only reappear near the top area of the site
+          setHiddenNav(false);
         }
       } else {
         setHiddenNav(false);
@@ -78,7 +78,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-6 text-slate-600 font-semibold text-[11px] tracking-wider uppercase">
-            <Link to="/about" className="hover:text-[#0f172a] transition-colors">About StyleHub</Link>
+            <Link to="/about" className="hover:text-[#0f172a] transition-colors">About ShopLarvo</Link>
             <Link to="/contact" className="hover:text-[#0f172a] transition-colors">Client Services</Link>
             {user && (user.role === 'admin' || user.role === 'staff') && (
               <Link to="/admin" className="flex items-center gap-1 text-[#0f172a] font-bold hover:underline bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
@@ -101,7 +101,7 @@ export default function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-2xl font-extrabold tracking-tight text-slate-900">
-                STYLE<span className="text-slate-600">HUB</span>
+                SHOP<span className="text-slate-600">LARVO</span>
               </span>
               <span className="text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase -mt-1">
                 EXECUTIVE EDITION

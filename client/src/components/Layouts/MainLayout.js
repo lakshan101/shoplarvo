@@ -42,7 +42,7 @@ export default function MainLayout({ children }) {
                 <Gem className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-extrabold tracking-tight text-slate-900 hidden sm:inline">
-                STYLE<span className="text-slate-600">HUB</span>
+                SHOP<span className="text-slate-600">LARVO</span>
               </span>
             </Link>
           </div>
@@ -72,7 +72,7 @@ export default function MainLayout({ children }) {
         </main>
 
         <footer className="py-6 border-t border-slate-200 bg-white text-center text-xs text-slate-400">
-          © 2026 StyleHub Inc. Executive Dashboard Portal.
+          © 2026 ShopLarvo Inc. Executive Dashboard Portal.
         </footer>
       </div>
     );

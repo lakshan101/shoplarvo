@@ -23,7 +23,7 @@ export default function Login() {
 
     const res = await login(email.trim(), password);
     if (res.success) {
-      navigate('/'); // Redirect to Home UI after login
+      navigate('/');
     } else {
       setError(res.message || 'Login failed. Please check credentials.');
     }
@@ -34,7 +34,7 @@ export default function Login() {
     setPassword(demoPassword);
     const res = await login(demoEmail, demoPassword);
     if (res.success) {
-      navigate('/'); // Redirect to Home UI after demo login
+      navigate('/');
     }
   };
 
@@ -55,7 +55,7 @@ export default function Login() {
         <div className="relative min-h-screen p-12 bg-slate-900 text-white flex flex-col justify-between hidden md:flex overflow-hidden">
           <img 
             src="https://images.unsplash.com/photo-1509631179647-0177331693ae?w=1200" 
-            alt="StyleHub Haute Couture" 
+            alt="ShopLarvo Haute Couture" 
             className="absolute inset-0 w-full h-full object-cover opacity-65"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
@@ -89,7 +89,7 @@ export default function Login() {
                 CUSTOMER SIGN IN
               </div>
               <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Welcome Back</h2>
-              <p className="text-xs text-slate-500 mt-1">Enter your credentials to access your StyleHub account</p>
+              <p className="text-xs text-slate-500 mt-1">Enter your credentials to access your ShopLarvo account</p>
             </div>
 
             {error && (
