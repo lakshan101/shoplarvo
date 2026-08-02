@@ -144,7 +144,7 @@ export default function Register() {
       {/* Back to Store Top Button */}
       <Link 
         to="/" 
-        className="absolute top-6 left-6 z-30 px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 text-xs font-bold text-slate-800 shadow-md hover:bg-slate-900 hover:text-white transition-all flex items-center gap-1.5"
+        className="absolute top-4 left-4 sm:top-6 sm:left-6 z-30 px-3.5 sm:px-4 py-2 rounded-xl bg-white/90 backdrop-blur-md border border-slate-200 text-xs font-bold text-slate-800 shadow-md hover:bg-slate-900 hover:text-white transition-all flex items-center gap-1.5"
       >
         <ArrowLeft className="w-4 h-4" /> Back to Store
       </Link>
@@ -155,7 +155,7 @@ export default function Register() {
         <div className="relative min-h-screen p-12 bg-slate-900 text-white flex flex-col justify-between hidden md:flex overflow-hidden">
           <img 
             src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=1200" 
-            alt="StyleHub Haute Couture Registration" 
+            alt="ShopLarvo Haute Couture Registration" 
             className="absolute inset-0 w-full h-full object-cover opacity-60"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
@@ -171,7 +171,7 @@ export default function Register() {
 
           <div className="relative z-10 space-y-4 pb-6">
             <p className="text-xs lg:text-sm text-slate-200 font-light leading-relaxed max-w-md">
-              Create your StyleHub Account to unlock personalized recommendations, priority access to drop collections, and instant checkout discounts.
+              Create your ShopLarvo Account to unlock personalized recommendations, priority access to drop collections, and instant checkout discounts.
             </p>
 
             <div className="space-y-2.5 pt-2 text-xs font-semibold text-slate-200">
@@ -192,7 +192,7 @@ export default function Register() {
         </div>
 
         {/* Right Side: 100% Full-Screen Interactive Stepper Form */}
-        <div className="min-h-screen p-8 md:p-16 flex flex-col justify-center bg-white space-y-8 overflow-y-auto">
+        <div className="min-h-screen p-6 sm:p-12 md:p-16 flex flex-col justify-center bg-white space-y-6 sm:space-y-8 overflow-y-auto pt-20 md:pt-16">
           
           <div className="max-w-md mx-auto w-full space-y-6">
             
@@ -201,12 +201,12 @@ export default function Register() {
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-800 text-[10px] font-bold uppercase tracking-widest border border-slate-200 mb-2">
                 CUSTOMER REGISTRATION
               </div>
-              <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">Create Account</h2>
-              <p className="text-xs text-slate-500 mt-1">Join StyleHub with 256-bit encrypted security</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Create Account</h2>
+              <p className="text-xs text-slate-500 mt-1">Join ShopLarvo with 256-bit encrypted security</p>
             </div>
 
             {/* Stepper Tabs with Strict Tab Locking */}
-            <div className="grid grid-cols-3 gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-[11px] font-bold text-center">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 text-[10px] sm:text-[11px] font-bold text-center">
               <button 
                 type="button" 
                 onClick={() => setStep(1)}

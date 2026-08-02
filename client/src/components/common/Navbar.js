@@ -40,6 +40,7 @@ export default function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+      setMobileMenuOpen(false);
     }
   };
 
@@ -61,12 +62,12 @@ export default function Navbar() {
       <div className="bg-[#f1f5f9] border-b border-slate-200/80 px-4 sm:px-6 lg:px-12">
         <div className="w-full max-w-none flex items-center justify-between text-xs font-bold">
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-0.5">
             {['ALL', 'WOMEN', 'MEN'].map((dept) => (
               <button
                 key={dept}
                 onClick={() => { setSelectedDepartment(dept); navigate('/shop'); }}
-                className={`py-2.5 px-6 tracking-[0.12em] transition-all border-b-2 ${
+                className={`py-2 px-4 sm:px-6 tracking-[0.12em] transition-all border-b-2 text-[11px] sm:text-xs whitespace-nowrap ${
                   selectedDepartment === dept 
                     ? 'border-[#0f172a] text-[#0f172a] bg-white font-extrabold shadow-sm' 
                     : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
@@ -92,24 +93,24 @@ export default function Navbar() {
 
       {/* 3. Main Professional Header Bar */}
       <div className="w-full max-w-none px-4 sm:px-6 lg:px-12">
-        <div className="flex items-center justify-between h-20 gap-6">
+        <div className="flex items-center justify-between h-16 sm:h-20 gap-3 sm:gap-6">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-[#0f172a] p-0.5 shadow-md shadow-slate-900/10 group-hover:scale-105 transition-transform flex items-center justify-center text-white">
-              <Gem className="w-5 h-5 text-white" />
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#0f172a] p-0.5 shadow-md shadow-slate-900/10 group-hover:scale-105 transition-transform flex items-center justify-center text-white">
+              <Gem className="w-4.5 h-4.5 sm:w-5 sm:h-5 text-white" />
             </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-extrabold tracking-tight text-slate-900">
+              <span className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
                 SHOP<span className="text-slate-600">LARVO</span>
               </span>
-              <span className="text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase -mt-1">
+              <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.2em] text-slate-500 uppercase -mt-1">
                 EXECUTIVE EDITION
               </span>
             </div>
           </Link>
 
-          {/* Search Input */}
+          {/* Desktop Search Input */}
           <form onSubmit={handleSearchSubmit} className="hidden md:flex flex-1 max-w-2xl relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-3.5" />
             <input 
@@ -125,23 +126,23 @@ export default function Navbar() {
           </form>
 
           {/* Right Actions & SINGLE Sign In Button */}
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-4 shrink-0">
             
             {/* Wishlist Icon */}
-            <Link to="/shop" className="relative p-2 text-slate-700 hover:text-slate-900 transition-colors">
-              <Heart className="w-6 h-6" />
+            <Link to="/shop" className="relative p-1.5 sm:p-2 text-slate-700 hover:text-slate-900 transition-colors">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6" />
               {wishlistCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                <span className="absolute -top-1 -right-1 bg-slate-900 text-white text-[10px] font-extrabold w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md">
                   {wishlistCount}
                 </span>
               )}
             </Link>
 
             {/* Shopping Bag Icon */}
-            <Link to="/cart" className="relative p-2 text-slate-700 hover:text-slate-900 transition-colors">
-              <ShoppingBag className="w-6 h-6" />
+            <Link to="/cart" className="relative p-1.5 sm:p-2 text-slate-700 hover:text-slate-900 transition-colors">
+              <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6" />
               {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-[10px] font-extrabold w-4.5 h-4.5 sm:w-5 sm:h-5 rounded-full flex items-center justify-center shadow-md">
                   {cartCount}
                 </span>
               )}
@@ -149,41 +150,92 @@ export default function Navbar() {
 
             {/* User Account / Single Sign In Header Button */}
             {user ? (
-              <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
-                <Link to="/profile" className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-xl">
-                  <div className="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow">
+              <div className="flex items-center gap-2 sm:gap-3 border-l border-slate-200 pl-2.5 sm:pl-4">
+                <Link to="/profile" className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl">
+                  <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow">
                     {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
                   <span className="hidden sm:inline">{user.name.split(' ')[0]}</span>
                 </Link>
                 <button 
                   onClick={() => { logout(); navigate('/login'); }}
-                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                  className="p-1.5 sm:p-2 text-slate-400 hover:text-red-500 transition-colors"
                   title="Sign Out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2 border-l border-slate-200 pl-4">
+              <div className="flex items-center gap-2 border-l border-slate-200 pl-2.5 sm:pl-4">
                 <Link 
                   to="/login" 
-                  className="px-5 py-2.5 text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                  className="px-3.5 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold text-white bg-slate-900 rounded-xl hover:bg-blue-600 shadow-md hover:shadow-lg transition-all flex items-center gap-1.5 sm:gap-2"
                 >
-                  <LogIn className="w-4 h-4" /> Sign In
+                  <LogIn className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Sign In
                 </Link>
               </div>
             )}
 
             {/* Mobile Menu Toggle */}
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-slate-800">
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-1.5 text-slate-800 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors">
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
           </div>
 
         </div>
       </div>
+
+      {/* Mobile Drawer Menu (Pixel-Perfect Mobile View) */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-white border-t border-slate-200 px-4 py-4 space-y-4 shadow-xl animate-fade-in">
+          
+          {/* Mobile Search */}
+          <form onSubmit={handleSearchSubmit} className="relative">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input 
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search ShopLarvo catalog..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-20 text-xs text-slate-900 focus:outline-none"
+            />
+            <button type="submit" className="absolute right-1.5 top-1 px-3 py-1.5 rounded-lg gradient-button text-xs font-bold text-white">
+              Search
+            </button>
+          </form>
+
+          {/* Mobile Category Links */}
+          <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-700 uppercase pt-2">
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-slate-900" /> New Season
+            </Link>
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              Trending Now
+            </Link>
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              Streetwear
+            </Link>
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              Suits & Tailoring
+            </Link>
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              Footwear
+            </Link>
+            <Link to="/shop" onClick={() => setMobileMenuOpen(false)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-colors font-extrabold flex items-center gap-1">
+              <Tag className="w-3.5 h-3.5" /> Outlet Sale %
+            </Link>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-slate-600">
+            <Link to="/about" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">About Us</Link>
+            <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="hover:text-slate-900">Client Support</Link>
+            {user && (user.role === 'admin' || user.role === 'staff') && (
+              <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="text-blue-600 font-extrabold">Portal</Link>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 4. Secondary Ribbon Nav */}
       <nav className="hidden md:block bg-slate-50 border-t border-slate-200 px-4 sm:px-6 lg:px-12">
