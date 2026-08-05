@@ -1,11 +1,11 @@
 # 🛍️ ShopLarvo - Smart Clothing Shop Management System
 
 [![Live Store](https://img.shields.io/badge/Live_Store-shoplarvo.com-blue?style=for-the-badge&logo=vercel)](https://shoplarvo.com)
-[![Database](https://img.shields.io/badge/Database-Supabase_PostgreSQL-emerald?style=for-the-badge&logo=supabase)](https://supabase.com)
+[![Database](https://img.shields.io/badge/Database-MongoDB_Atlas-emerald?style=for-the-badge&logo=mongodb)](https://mongodb.com)
 [![Stack](https://img.shields.io/badge/Stack-MERN_%2B_Vite-slate?style=for-the-badge&logo=react)](https://reactjs.org)
 [![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)](LICENSE)
 
-> **ShopLarvo Executive Edition** is a full-stack, enterprise-grade e-commerce application built with React, Node.js, Express, and Supabase (PostgreSQL). Designed for high-end fashion boutiques, streetwear drops, and tailored suit outlets.
+> **ShopLarvo Executive Edition** is a full-stack, enterprise-grade e-commerce application built with React, Node.js, Express, and MongoDB. Designed for high-end fashion boutiques, streetwear drops, and tailored suit outlets.
 
 ---
 
@@ -42,7 +42,7 @@
 | :--- | :--- |
 | **Frontend UI** | React 18, Vite, TailwindCSS, Lucide Icons, Context API |
 | **Backend Server** | Node.js, Express.js (REST API, CORS, Dotenv) |
-| **Database** | **Supabase (PostgreSQL)** & MongoDB Atlas Fallback |
+| **Database** | **MongoDB Atlas** (Mongoose ODM) |
 | **Authentication** | JWT (JSON Web Tokens), Bcrypt.js (Password Hashing) |
 | **Hosting & Deployment** | Vercel (CD/CI Serverless Functions), Porkbun Custom DNS (`shoplarvo.com`) |
 
@@ -60,14 +60,13 @@ Smart Clothing Shop Management System/
 │   │   ├── epics/               # Core Application Feature Modules (E1-E4)
 │   │   └── pages/               # Page Views (Home, Shop, Cart, Profile, Admin)
 │   └── vite.config.js
-├── config/                      # Supabase & MongoDB Connection Clients
-│   ├── db.js
-│   └── supabase.js
+├── config/                      # MongoDB Connection Client
+│   └── db.js
 ├── controllers/                 # Express REST API Controllers
 ├── middleware/                  # JWT Auth & Role Authorization Middleware
-├── models/                      # NoSQL/SQL Data Models
+├── models/                      # Mongoose Data Models
 ├── routes/                      # API Route Handlers (/api/auth, /api/products, etc.)
-├── seed/                        # SQL Schema & Supabase Database Seeder Scripts
+├── seed/                        # Database Seeder Scripts
 ├── api/                         # Vercel Serverless Function Entrypoint
 ├── server.js                    # Node.js Server Entry Point
 └── vercel.json                  # Vercel Deployment & SPA Rewrite Config
@@ -79,7 +78,7 @@ Smart Clothing Shop Management System/
 
 ### 1. Prerequisites
 - Node.js (v18+)
-- Supabase Account (`https://supabase.com`)
+- MongoDB Atlas Cluster or Local MongoDB instance
 
 ### 2. Clone Repository
 ```bash
@@ -94,10 +93,7 @@ Create a `.env` file in the root folder:
 PORT=5000
 NODE_ENV=development
 JWT_SECRET=shoplarvo_super_secret_jwt_key_2026_fashion_shop
-
-# Supabase Credentials
-SUPABASE_URL=https://xrzqqhpxnxbxizldppss.supabase.co
-SUPABASE_KEY=your-supabase-anon-key
+MONGO_URI=mongodb://127.0.0.1:27017/stylehub_db
 ```
 
 ### 4. Install Dependencies
@@ -111,12 +107,10 @@ npm install
 cd ..
 ```
 
-### 5. Initialize Supabase Database Tables
-Run the SQL script from `seed/supabase_schema.sql` in your **Supabase SQL Editor**:
-
+### 5. Initialize Sample Database Data
 ```bash
-# Seed initial sample data to Supabase
-node seed/supabaseSeeder.js
+# Seed initial sample data to MongoDB
+npm run seed
 ```
 
 ### 6. Run Development Servers
@@ -131,14 +125,14 @@ npm run dev
 
 Open [http://localhost:3000/](http://localhost:3000/) in your browser.
 
-----
+---
 
 ## 🌐 Live Production Deployment
 
 ### Deploying on Vercel
 1. Push code to GitHub: `git push origin main`
 2. Import repository on [Vercel](https://vercel.com).
-3. Add Environment Variables: `SUPABASE_URL`, `SUPABASE_KEY`, `JWT_SECRET`.
+3. Add Environment Variables: `MONGO_URI`, `JWT_SECRET`.
 4. Click **Deploy**.
 
 ### Custom Domain Configuration (`shoplarvo.com`)

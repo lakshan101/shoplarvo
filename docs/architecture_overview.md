@@ -18,13 +18,8 @@ This document describes the high-level architecture, data flow, and key design d
              │ fetch()                 │
              │                         ▼
              │              ┌─────────────────────┐
-             │              │  Supabase (Primary)  │
-             │              │  PostgreSQL Database  │
-             │              └─────────────────────┘
-             │                         │
-             │              ┌─────────────────────┐
              │              │  MongoDB Atlas       │
-             │              │  (Fallback / Legacy) │
+             │              │  (Primary Database)  │
              │              └─────────────────────┘
              ▼
       ┌──────────────┐
@@ -42,8 +37,7 @@ shoplarvo/
 ├── api/index.js              # Vercel serverless entrypoint (re-exports Express app)
 ├── server.js                 # Express app definition & middleware chain
 ├── config/
-│   ├── db.js                 # MongoDB Atlas connection (fallback)
-│   └── supabase.js           # Supabase client initialization
+│   └── db.js                 # MongoDB Atlas connection client
 ├── middleware/
 │   ├── authMiddleware.js     # JWT Bearer token verification
 │   ├── roleMiddleware.js     # Role-based access control (admin, staff)
@@ -66,9 +60,7 @@ shoplarvo/
 │   ├── orderRoutes.js        # /api/orders/*
 │   ├── adminRoutes.js        # /api/admin/*
 │   └── recommendationRoutes.js  # /api/recommendations/*
-├── seed/                     # DB schema & seeder scripts
-│   ├── supabase_schema.sql   # PostgreSQL DDL
-│   ├── supabaseSeeder.js     # Seed data via Supabase client
+├── seed/                     # DB seeder scripts
 │   └── seeder.js             # Seed data via MongoDB
 ├── client/                   # Vite + React 18 frontend
 │   ├── src/

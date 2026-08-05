@@ -2,7 +2,7 @@
 
 ## Project Context
 - **Type**: Full-stack e-commerce (fashion/clothing)
-- **Backend**: Express 4 (CommonJS) + Supabase PostgreSQL + MongoDB Atlas fallback
+- **Backend**: Express 4 (CommonJS) + MongoDB Atlas (Mongoose)
 - **Frontend**: React 18 + Vite 5 + TailwindCSS 3 + Lucide Icons + Context API
 - **Deployment**: Vercel serverless functions
 - **Epics**: E1 (Auth), E2 (Products), E3 (Shopping/Orders), E4 (Admin)
@@ -14,7 +14,7 @@
 - JWT auth via `middleware/authMiddleware.js` — `protect` middleware extracts `req.user`
 - Role checks via `middleware/roleMiddleware.js`
 - Centralized error handler: `middleware/errorMiddleware.js`
-- DB config: `config/db.js` (Mongoose), `config/supabase.js` (Supabase client)
+- DB config: `config/db.js` (Mongoose)
 
 ### Frontend
 - State via Context API: `AuthContext` (user/token), `CartContext` (cart/wishlist/department)
@@ -32,5 +32,4 @@
 ## Important Notes
 - The `mockCatalog` in `Shop.js` is hardcoded — not fetched from API yet
 - JWT secret has a hardcoded fallback in `authMiddleware.js` — always set `JWT_SECRET` env var
-- Supabase client in `config/supabase.js` has placeholder defaults — requires real credentials
 - MongoDB connection gracefully degrades (warns, doesn't crash) when unavailable
