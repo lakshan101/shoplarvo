@@ -1,116 +1,121 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
+const Product = require('../models/Product');
 
-const memoryOrders = [
-  {
-    _id: 'ord_1001',
-    user: 'usr_customer',
-    orderItems: [
-      {
-        title: 'Urban Cyberpunk Oversized Hoodie',
-        quantity: 1,
-        price: 85.00,
-        selectedSize: 'L',
-        selectedColor: 'Black',
-        image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600'
-      }
-    ],
-    shippingAddress: {
-      street: '45 Galle Road',
-      city: 'Colombo 03',
-      state: 'Western Province',
-      zipCode: '00300',
-      country: 'Sri Lanka'
-    },
-    paymentMethod: 'Credit Card',
-    totalAmount: 85.00,
-    status: 'Shipped',
-    trackingNumber: 'SH-TRK-98742',
-    createdAt: new Date()
+// No in-memory fallback — orders require MongoDB for data integrity.
+const requireDB = (req, res) => {
+  if (mongoose.connection.readyState !== 1) {
+    res.status(503).json({
+      success: false,
+      message: 'Database unavailable. Order operations require a live MongoDB connection.'
+    });
+    return false;
   }
-];
+  return true;
+};
 
+// @desc    Create a new order
+// @route   POST /api/orders
+// @access  Authenticated
 const createOrder = async (req, res, next) => {
   try {
+    if (!requireDB(req, res)) return;
+
     const { orderItems, shippingAddress, paymentMethod, totalAmount } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
-      return res.status(400).json({ success: false, message: 'No order items provided' });
+      return res.status(400).json({ success: false, message: 'No order items provided.' });
+    }
+
+    // --- Stock validation: check every item before creating the order ---
+    const insufficientItems = [];
+
+    for (const item of orderItems) {
+      if (!item.product) {
+        insufficientItems.push({ title: item.title || 'Unknown', reason: 'Missing product reference.' });
+        continue;
+      }
+
+      const product = await Product.findById(item.product).select('title stockCount');
+      if (!product) {
+        insufficientItems.push({ title: item.title || item.product, reason: 'Product not found.' });
+        continue;
+      }
+
+      if (product.stockCount < item.quantity) {
+        insufficientItems.push({
+          title: product.title,
+          requested: item.quantity,
+          available: product.stockCount
+        });
+      }
+    }
+
+    if (insufficientItems.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient stock for one or more items.',
+        insufficientItems
+      });
     }
 
     const trackingNumber = 'SH-TRK-' + Math.floor(10000 + Math.random() * 90000);
 
-    if (mongoose.connection.readyState === 1) {
-      const order = await Order.create({
-        user: req.user.id,
-        orderItems,
-        shippingAddress,
-        paymentMethod: paymentMethod || 'Credit Card',
-        totalAmount,
-        status: 'Processing',
-        trackingNumber
-      });
-      return res.status(201).json({ success: true, message: 'Order placed successfully', order });
-    } else {
-      const newOrder = {
-        _id: 'ord_' + Date.now(),
-        user: req.user.id,
-        orderItems,
-        shippingAddress,
-        paymentMethod: paymentMethod || 'Credit Card',
-        totalAmount,
-        status: 'Processing',
-        trackingNumber,
-        createdAt: new Date()
-      };
-      memoryOrders.unshift(newOrder);
-      return res.status(201).json({ success: true, message: 'Order placed successfully', order: newOrder });
-    }
+    const order = await Order.create({
+      user: req.user.id,
+      orderItems,
+      shippingAddress,
+      paymentMethod: paymentMethod || 'Credit Card',
+      totalAmount,
+      status: 'Pending Payment',
+      trackingNumber
+    });
+
+    return res.status(201).json({ success: true, message: 'Order placed successfully', order });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc    Get logged-in user's orders
+// @route   GET /api/orders/my-orders
+// @access  Authenticated
 const getMyOrders = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
-      return res.json({ success: true, count: orders.length, orders });
-    } else {
-      const orders = memoryOrders.filter(o => o.user === req.user.id || req.user.role === 'customer');
-      return res.json({ success: true, count: orders.length, orders });
-    }
+    if (!requireDB(req, res)) return;
+
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    return res.json({ success: true, count: orders.length, orders });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc    Get all orders (admin)
+// @route   GET /api/orders
+// @access  Admin/Staff
 const getAllOrders = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
-      const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
-      return res.json({ success: true, count: orders.length, orders });
-    } else {
-      return res.json({ success: true, count: memoryOrders.length, orders: memoryOrders });
-    }
+    if (!requireDB(req, res)) return;
+
+    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
+    return res.json({ success: true, count: orders.length, orders });
   } catch (error) {
     next(error);
   }
 };
 
+// @desc    Update order status
+// @route   PUT /api/orders/:id/status
+// @access  Admin/Staff
 const updateOrderStatus = async (req, res, next) => {
   try {
+    if (!requireDB(req, res)) return;
+
     const { status } = req.body;
-    if (mongoose.connection.readyState === 1) {
-      const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
-      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-      return res.json({ success: true, message: 'Order status updated', order });
-    } else {
-      const order = memoryOrders.find(o => o._id === req.params.id);
-      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-      order.status = status;
-      return res.json({ success: true, message: 'Order status updated', order });
-    }
+    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+    return res.json({ success: true, message: 'Order status updated', order });
   } catch (error) {
     next(error);
   }

@@ -88,13 +88,21 @@ const fallbackProducts = [
   }
 ];
 
+// Compute isLowStock without persisting it to the document
+const withLowStock = (product) => {
+  const threshold = product.lowStockThreshold ?? 5;
+  const stock = product.stockCount ?? 0;
+  const plain = typeof product.toObject === 'function' ? product.toObject() : { ...product };
+  return { ...plain, isLowStock: stock <= threshold };
+};
+
 const getProducts = async (req, res, next) => {
   try {
     if (mongoose.connection.readyState === 1) {
       const products = await Product.find().sort({ createdAt: -1 });
-      return res.json({ success: true, count: products.length, products });
+      return res.json({ success: true, count: products.length, products: products.map(withLowStock) });
     } else {
-      return res.json({ success: true, count: fallbackProducts.length, products: fallbackProducts });
+      return res.json({ success: true, count: fallbackProducts.length, products: fallbackProducts.map(withLowStock) });
     }
   } catch (error) {
     next(error);
@@ -106,11 +114,11 @@ const getProductById = async (req, res, next) => {
     if (mongoose.connection.readyState === 1) {
       const product = await Product.findById(req.params.id);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-      return res.json({ success: true, product });
+      return res.json({ success: true, product: withLowStock(product) });
     } else {
       const product = fallbackProducts.find(p => p._id === req.params.id);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-      return res.json({ success: true, product });
+      return res.json({ success: true, product: withLowStock(product) });
     }
   } catch (error) {
     next(error);
@@ -170,10 +178,84 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
+// @desc    Atomically adjust product stock by a delta (+/-)
+// @route   PATCH /api/admin/products/:id/stock
+// @access  Admin/Staff
+const adjustStock = async (req, res, next) => {
+  try {
+    const delta = Number(req.body.delta);
+
+    if (!Number.isFinite(delta) || delta === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'delta must be a non-zero finite number (positive to restock, negative to correct).'
+      });
+    }
+
+    if (mongoose.connection.readyState === 1) {
+      // --- MongoDB path: atomic $inc with a floor guard ---
+      // First check that the resulting stock would not go negative
+      const current = await Product.findById(req.params.id).select('stockCount lowStockThreshold title');
+      if (!current) {
+        return res.status(404).json({ success: false, message: 'Product not found.' });
+      }
+
+      if (current.stockCount + delta < 0) {
+        return res.status(422).json({
+          success: false,
+          message: `Adjustment rejected: would reduce stock to ${
+            current.stockCount + delta
+          } (current stock: ${current.stockCount}). Stock cannot go below 0.`
+        });
+      }
+
+      // Atomic $inc — safe because we validated above within the same request
+      const updated = await Product.findByIdAndUpdate(
+        req.params.id,
+        { $inc: { stockCount: delta } },
+        { new: true }
+      );
+
+      return res.json({
+        success: true,
+        message: `Stock adjusted by ${delta > 0 ? '+' : ''}${delta}. New stock: ${updated.stockCount}.`,
+        product: withLowStock(updated)
+      });
+    } else {
+      // --- Memory fallback path ---
+      const idx = fallbackProducts.findIndex(p => p._id === req.params.id);
+      if (idx === -1) {
+        return res.status(404).json({ success: false, message: 'Product not found.' });
+      }
+
+      const current = fallbackProducts[idx];
+      if (current.stockCount + delta < 0) {
+        return res.status(422).json({
+          success: false,
+          message: `Adjustment rejected: would reduce stock to ${
+            current.stockCount + delta
+          } (current stock: ${current.stockCount}). Stock cannot go below 0.`
+        });
+      }
+
+      fallbackProducts[idx] = { ...current, stockCount: current.stockCount + delta };
+
+      return res.json({
+        success: true,
+        message: `Stock adjusted by ${delta > 0 ? '+' : ''}${delta}. New stock: ${fallbackProducts[idx].stockCount}.`,
+        product: withLowStock(fallbackProducts[idx])
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
   createProduct,
   updateProduct,
-  deleteProduct
+  deleteProduct,
+  adjustStock
 };
