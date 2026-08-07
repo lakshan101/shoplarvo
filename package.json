@@ -1,6 +1,6 @@
 {
   "name": "shoplarvo-smart-clothing-shop-management-system",
-  "version": "1.0.0",
+  "version": "1.4.0",
   "description": "ShopLarvo - Smart Clothing Shop Management System Server",
   "main": "server.js",
   "type": "commonjs",

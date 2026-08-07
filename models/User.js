@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
   addresses: [addressSchema],
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+  isActive: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 

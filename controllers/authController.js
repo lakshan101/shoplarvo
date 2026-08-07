@@ -48,6 +48,7 @@ const memoryUsers = [
     role: 'admin',
     phone: '+94 77 123 4567',
     secondaryPhone: '+94 11 234 5678',
+    isActive: true,
     addresses: [],
     createdAt: new Date()
   },
@@ -59,6 +60,7 @@ const memoryUsers = [
     role: 'staff',
     phone: '+94 71 987 6543',
     secondaryPhone: '',
+    isActive: true,
     addresses: [],
     createdAt: new Date()
   },
@@ -70,6 +72,7 @@ const memoryUsers = [
     role: 'customer',
     phone: '+94 70 555 1212',
     secondaryPhone: '+94 11 555 9999',
+    isActive: true,
     addresses: [
       {
         _id: 'addr_default',
@@ -236,20 +239,8 @@ const loginUser = async (req, res, next) => {
         return res.status(401).json({ success: false, message: 'Invalid credentials: Email or password incorrect.' });
       }
 
-      const token = generateToken(user._id, user.email, user.role);
-      return res.json({
-        success: true,
-        message: 'Login successful',
-        token,
-        user: { 
-          id: user._id, name: user.name, email: user.email, role: user.role, 
-          phone: user.phone, secondaryPhone: user.secondaryPhone, addresses: user.addresses 
-        }
-      });
-    } else {
-      const user = memoryUsers.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
-      if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
-        return res.status(401).json({ success: false, message: 'Invalid credentials: Email or password incorrect.' });
+      if (user.isActive === false) {
+        return res.status(403).json({ success: false, message: 'Account deactivated. Contact administrator.' });
       }
 
       const token = generateToken(user._id, user.email, user.role);
@@ -259,7 +250,29 @@ const loginUser = async (req, res, next) => {
         token,
         user: { 
           id: user._id, name: user.name, email: user.email, role: user.role, 
-          phone: user.phone, secondaryPhone: user.secondaryPhone, addresses: user.addresses 
+          phone: user.phone, secondaryPhone: user.secondaryPhone, addresses: user.addresses,
+          isActive: user.isActive 
+        }
+      });
+    } else {
+      const user = memoryUsers.find(u => u.email.toLowerCase() === email.toLowerCase().trim());
+      if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+        return res.status(401).json({ success: false, message: 'Invalid credentials: Email or password incorrect.' });
+      }
+
+      if (user.isActive === false) {
+        return res.status(403).json({ success: false, message: 'Account deactivated. Contact administrator.' });
+      }
+
+      const token = generateToken(user._id, user.email, user.role);
+      return res.json({
+        success: true,
+        message: 'Login successful',
+        token,
+        user: { 
+          id: user._id, name: user.name, email: user.email, role: user.role, 
+          phone: user.phone, secondaryPhone: user.secondaryPhone, addresses: user.addresses,
+          isActive: user.isActive 
         }
       });
     }
@@ -457,6 +470,9 @@ const getAllCustomers = async (req, res, next) => {
   }
 };
 
+// Expose memoryUsers for userController fallback path
+const _getMemoryUsers = () => memoryUsers;
+
 module.exports = {
   checkEmail,
   registerUser,
@@ -466,5 +482,6 @@ module.exports = {
   changePassword,
   addAddress,
   updateAddress,
-  getAllCustomers
+  getAllCustomers,
+  _getMemoryUsers
 };
