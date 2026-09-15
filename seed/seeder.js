@@ -108,9 +108,9 @@ const productsData = [
 
 const seedData = async () => {
   try {
-    const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/stylehub_db';
+    const connectDB = require('../config/db');
     console.log('[Seeder] Connecting to MongoDB Atlas cluster...');
-    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5000 });
+    await connectDB();
 
     console.log('[Seeder] Connection Successful! Populating MongoDB Atlas database: stylehub_db...');
 
@@ -124,15 +124,23 @@ const seedData = async () => {
     const adminUser = await User.create({
       name: 'Demo Admin',
       email: 'admin@stylehub.com',
-      password: 'adminpassword123',
+      password: 'AdminStyle#2026',
       role: 'admin',
       phone: '+94 77 123 4567'
+    });
+
+    const adminUser2 = await User.create({
+      name: 'StyleHub Admin',
+      email: 'admin@larvofashion.com',
+      password: 'AdminStyle#2026',
+      role: 'admin',
+      phone: '+94 77 123 4568'
     });
 
     const staffUser = await User.create({
       name: 'Staff Member',
       email: 'staff@stylehub.com',
-      password: 'staffpassword123',
+      password: 'StaffStyle#2026',
       role: 'staff',
       phone: '+94 71 987 6543'
     });
@@ -140,7 +148,7 @@ const seedData = async () => {
     const customerUser = await User.create({
       name: 'Sarah Connor',
       email: 'sarah@example.com',
-      password: 'userpassword123',
+      password: 'SarahStyle#2026',
       role: 'customer',
       phone: '+94 70 555 1212',
       addresses: [
