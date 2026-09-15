@@ -205,7 +205,9 @@ export default function PaymentDashboard() {
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="font-extrabold text-slate-900 text-base">{ord.customerName || 'Customer'}</h3>
+                    <h3 className="font-extrabold text-slate-900 text-base">
+                      Customer: {ord.customerName || ord.shippingAddress?.name || (typeof ord.user === 'object' ? ord.user?.name : null) || 'Valued Customer'}
+                    </h3>
                     <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase ${
                       ord.status === 'Payment Pending (Slip Uploaded)' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                     }`}>

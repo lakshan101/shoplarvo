@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
+import ShippingWaybillModal from '../components/common/ShippingWaybillModal';
 import { 
   Truck, PackageCheck, Clock, CheckCircle2, Search, MapPin, 
-  Phone, Mail, FileText, AlertCircle, RefreshCw, Save, Image, Check, XCircle
+  Phone, Mail, FileText, AlertCircle, RefreshCw, Save, Image, Check, XCircle, Printer
 } from 'lucide-react';
 
 export default function DeliveryDashboard() {
@@ -15,6 +16,7 @@ export default function DeliveryDashboard() {
   const [message, setMessage] = useState('');
   const [selectedSlipUrl, setSelectedSlipUrl] = useState(null);
   const [selectedDamageUrl, setSelectedDamageUrl] = useState(null);
+  const [selectedWaybillOrder, setSelectedWaybillOrder] = useState(null);
 
   useEffect(() => {
     fetchDeliveryOrders();
@@ -270,6 +272,7 @@ export default function DeliveryDashboard() {
               isUpdating={updatingOrderId === ord._id}
               onViewSlip={(url) => setSelectedSlipUrl(url)}
               onViewDamage={(url) => setSelectedDamageUrl(url)}
+              onViewWaybill={(o) => setSelectedWaybillOrder(o)}
             />
           ))}
         </div>
@@ -296,15 +299,25 @@ export default function DeliveryDashboard() {
         </div>
       )}
 
+      {/* Express Shipping Waybill / Delivery Label PDF Modal */}
+      {selectedWaybillOrder && (
+        <ShippingWaybillModal
+          order={selectedWaybillOrder}
+          onClose={() => setSelectedWaybillOrder(null)}
+        />
+      )}
+
     </div>
   );
 }
 
 // Subcomponent for each Delivery Order Card
-function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMarkReturnCollected, isUpdating, onViewSlip, onViewDamage }) {
+function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMarkReturnCollected, isUpdating, onViewSlip, onViewDamage, onViewWaybill }) {
   const [currentStatus, setCurrentStatus] = useState(order.status || 'Payment Approved - Ready for Packing');
   const [trackingNo, setTrackingNo] = useState(order.trackingNumber || `SH-TRK-${Math.floor(10000 + Math.random() * 90000)}`);
   const [notes, setNotes] = useState(order.deliveryNotes || '');
+
+  const customerName = order.customerName || order.shippingAddress?.name || (typeof order.user === 'object' ? order.user?.name : null) || 'Valued Customer';
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-sm hover:shadow-md transition text-slate-900">
@@ -313,7 +326,9 @@ function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMar
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-extrabold text-slate-900">{order.customerName || order.user?.name || 'Customer Order'}</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">
+              Customer Order: <span className="text-indigo-600 font-black">{customerName}</span>
+            </h3>
             <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
               currentStatus === 'Successfully Delivered'
                 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
@@ -334,6 +349,13 @@ function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMar
         </div>
 
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {/* Printable Shipping Label / Waybill PDF Button */}
+          <button
+            onClick={() => onViewWaybill(order)}
+            className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white text-xs font-extrabold shadow transition flex items-center gap-1.5"
+          >
+            <Printer className="w-3.5 h-3.5 text-indigo-300" /> Print Waybill Label (PDF)
+          </button>
           {order.paymentSlipUrl && (
             <button
               onClick={() => onViewSlip(order.paymentSlipUrl)}
