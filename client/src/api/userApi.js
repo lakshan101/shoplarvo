@@ -1,5 +1,14 @@
 const API_BASE = '/api/admin';
 
+const safeParseJson = async (res) => {
+  try {
+    const text = await res.text();
+    return text ? JSON.parse(text) : { success: false, message: 'Server returned empty response.' };
+  } catch (err) {
+    return { success: false, message: 'Server error or invalid response format. Please try again.' };
+  }
+};
+
 export const getUsersApi = async (token, { page = 1, limit = 10, search = '', role = '' } = {}) => {
   const params = new URLSearchParams();
   params.set('page', page);
@@ -10,7 +19,7 @@ export const getUsersApi = async (token, { page = 1, limit = 10, search = '', ro
   const res = await fetch(`${API_BASE}/users?${params.toString()}`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const toggleUserStatusApi = async (token, userId, isActive) => {
@@ -22,5 +31,5 @@ export const toggleUserStatusApi = async (token, userId, isActive) => {
     },
     body: JSON.stringify({ isActive })
   });
-  return await res.json();
+  return await safeParseJson(res);
 };

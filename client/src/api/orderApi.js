@@ -1,5 +1,14 @@
 const API_BASE = '/api/orders';
 
+const safeParseJson = async (res) => {
+  try {
+    const text = await res.text();
+    return text ? JSON.parse(text) : { success: false, message: 'Server returned empty response.' };
+  } catch (err) {
+    return { success: false, message: 'Server error or invalid response format. Please try again.' };
+  }
+};
+
 export const createOrderApi = async (token, orderData) => {
   const headers = {
     'Content-Type': 'application/json'
@@ -13,7 +22,7 @@ export const createOrderApi = async (token, orderData) => {
     headers,
     body: JSON.stringify(orderData)
   });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const getMyOrdersApi = async (token) => {
@@ -22,7 +31,7 @@ export const getMyOrdersApi = async (token) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
   const res = await fetch(`${API_BASE}/my-orders`, { headers });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const getAllOrdersApi = async (token) => {
@@ -31,7 +40,7 @@ export const getAllOrdersApi = async (token) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
   const res = await fetch(API_BASE, { headers });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const updateOrderStatusApi = async (token, orderId, status) => {
@@ -46,5 +55,5 @@ export const updateOrderStatusApi = async (token, orderId, status) => {
     headers,
     body: JSON.stringify({ status })
   });
-  return await res.json();
+  return await safeParseJson(res);
 };

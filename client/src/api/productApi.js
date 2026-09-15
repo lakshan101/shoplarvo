@@ -1,8 +1,17 @@
 const API_BASE = '/api/products';
 
+const safeParseJson = async (res) => {
+  try {
+    const text = await res.text();
+    return text ? JSON.parse(text) : { success: false, message: 'Server returned empty response.' };
+  } catch (err) {
+    return { success: false, message: 'Server error or invalid response format. Please try again.' };
+  }
+};
+
 export const fetchProductsApi = async () => {
   const res = await fetch(API_BASE);
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const createProductApi = async (token, productData) => {
@@ -14,7 +23,7 @@ export const createProductApi = async (token, productData) => {
     },
     body: JSON.stringify(productData)
   });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const updateProductApi = async (token, id, productData) => {
@@ -26,7 +35,7 @@ export const updateProductApi = async (token, id, productData) => {
     },
     body: JSON.stringify(productData)
   });
-  return await res.json();
+  return await safeParseJson(res);
 };
 
 export const deleteProductApi = async (token, id) => {
@@ -36,5 +45,5 @@ export const deleteProductApi = async (token, id) => {
       'Authorization': `Bearer ${token}`
     }
   });
-  return await res.json();
+  return await safeParseJson(res);
 };
