@@ -3,7 +3,7 @@ import { CartContext } from '../../context/CartContext';
 import { AuthContext } from '../../context/AuthContext';
 import { createOrderApi } from '../../api/orderApi';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, MapPin, Tag, CreditCard, Check, ArrowRight, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react';
+import { ShoppingBag, MapPin, Tag, CreditCard, Check, ArrowRight, ShieldCheck, Plus, Minus, Trash2, Upload, Building2, FileCheck, CheckCircle2 } from 'lucide-react';
 
 export default function CheckoutStepper() {
   const { cartItems, cartTotal, subtotal, removeFromCart, updateQuantity, clearCart } = useContext(CartContext);
@@ -21,12 +21,26 @@ export default function CheckoutStepper() {
   const [couponCode, setCouponCode] = useState('STYLE25');
   const [discountPercent, setDiscountPercent] = useState(25);
   const [couponApplied, setCouponApplied] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState('Credit Card');
+  const [paymentMethod, setPaymentMethod] = useState('Bank Deposit / Slip Upload');
+  const [paymentSlipUrl, setPaymentSlipUrl] = useState('');
+  const [slipFileName, setSlipFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentCartTotal = cartTotal || subtotal || 0;
   const discountAmount = (currentCartTotal * (discountPercent || 0)) / 100;
   const finalTotal = Math.max(0, currentCartTotal - discountAmount);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSlipFileName(file.name);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPaymentSlipUrl(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -39,6 +53,11 @@ export default function CheckoutStepper() {
   };
 
   const handlePlaceOrder = async () => {
+    if (paymentMethod === 'Bank Deposit / Slip Upload' && !paymentSlipUrl) {
+      alert('Please upload your bank deposit payment slip receipt image before placing your order.');
+      return;
+    }
+
     setIsSubmitting(true);
     const orderItems = cartItems.map(item => ({
       product: item._id,
@@ -54,6 +73,7 @@ export default function CheckoutStepper() {
       orderItems,
       shippingAddress,
       paymentMethod,
+      paymentSlipUrl,
       totalAmount: finalTotal
     };
 
@@ -247,21 +267,96 @@ export default function CheckoutStepper() {
           </div>
 
           {/* Payment Method Selector */}
-          <div className="space-y-3">
-            <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">Payment Gateway</label>
-            <div className="grid grid-cols-2 gap-3">
-              {['Credit Card', 'Cash on Delivery'].map((pm) => (
+          <div className="space-y-4">
+            <label className="block text-xs font-bold text-slate-900 uppercase tracking-wider">Select Payment Method</label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {[
+                { id: 'Bank Deposit / Slip Upload', label: 'Bank Slip Upload (Recommended)', icon: Upload },
+                { id: 'Cash on Delivery', label: 'Cash on Delivery', icon: Building2 },
+                { id: 'Credit Card', label: 'Credit / Debit Card', icon: CreditCard }
+              ].map((pm) => (
                 <button
-                  key={pm}
-                  onClick={() => setPaymentMethod(pm)}
-                  className={`p-4 rounded-2xl border text-xs font-bold text-left transition-all ${
-                    paymentMethod === pm ? 'bg-slate-900 text-white border-slate-900 shadow' : 'bg-slate-50 text-slate-700 border-slate-200'
+                  key={pm.id}
+                  type="button"
+                  onClick={() => setPaymentMethod(pm.id)}
+                  className={`p-4 rounded-2xl border text-xs font-bold text-left transition-all flex flex-col justify-between gap-2 ${
+                    paymentMethod === pm.id ? 'bg-slate-900 text-white border-slate-900 shadow-md' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  {pm}
+                  <pm.icon className="w-5 h-5" />
+                  <span>{pm.label}</span>
                 </button>
               ))}
             </div>
+
+            {/* Bank Deposit Account Details & Slip Upload Section */}
+            {paymentMethod === 'Bank Deposit / Slip Upload' && (
+              <div className="p-6 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-4 text-xs animate-fade-in">
+                <div className="flex items-center gap-2 text-indigo-900 font-extrabold text-sm border-b border-indigo-200/80 pb-3">
+                  <Building2 className="w-5 h-5 text-indigo-600" />
+                  <span>Larvo Fashion Official Bank Account Details</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-slate-800 font-medium">
+                  <div className="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Bank Name</span>
+                    <strong className="text-slate-900 text-sm">Commercial Bank of Ceylon</strong>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Account Holder</span>
+                    <strong className="text-slate-900 text-sm">Larvo Fashion (Pvt) Ltd</strong>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Account Number</span>
+                    <strong className="text-indigo-600 font-mono text-sm">8001 9847 2301</strong>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-xl border border-indigo-100 shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Branch</span>
+                    <strong className="text-slate-900 text-sm">Colombo Main Branch</strong>
+                  </div>
+                </div>
+
+                {/* File Upload Box */}
+                <div className="pt-2">
+                  <label className="block text-xs font-extrabold text-indigo-950 mb-2 flex items-center gap-1.5">
+                    <Upload className="w-4 h-4 text-indigo-600" />
+                    <span>Upload Bank Payment Slip Receipt (Required)</span>
+                  </label>
+
+                  <div className="border-2 border-dashed border-indigo-300 hover:border-indigo-500 rounded-2xl bg-white p-6 text-center transition relative cursor-pointer group">
+                    <input 
+                      type="file" 
+                      accept="image/*,.pdf"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+
+                    {paymentSlipUrl ? (
+                      <div className="space-y-3 flex flex-col items-center">
+                        <img 
+                          src={paymentSlipUrl} 
+                          alt="Uploaded payment slip receipt" 
+                          className="max-h-40 rounded-xl object-contain border border-indigo-200 shadow-md"
+                        />
+                        <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          <span>Slip Receipt Attached: {slipFileName || 'payment_slip.jpg'}</span>
+                        </div>
+                        <p className="text-[10px] text-slate-400">Click or drag to replace payment slip image</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <p className="font-bold text-slate-800 text-xs">Click here to upload your bank deposit receipt</p>
+                        <p className="text-[11px] text-slate-500">Supports JPG, PNG, WEBP or PDF receipt screenshots</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Final Summary Calculation */}

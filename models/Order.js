@@ -20,7 +20,8 @@ const orderSchema = new mongoose.Schema({
     zipCode: String,
     country: String
   },
-  paymentMethod: { type: String, default: 'Credit Card' },
+  paymentMethod: { type: String, default: 'Bank Slip Upload' },
+  paymentSlipUrl: { type: String, default: '' },
   totalAmount: { type: Number, required: true },
   status: { 
     type: String, 

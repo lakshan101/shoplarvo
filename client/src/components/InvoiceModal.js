@@ -104,16 +104,29 @@ const InvoiceModal = ({ order, onClose }) => {
             </table>
           </div>
 
-          {/* Total Calculation */}
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="flex items-center space-x-2 text-green-600 text-xs font-medium">
-              <CheckCircle className="w-4 h-4" />
-              <span>Payment Method: {order.paymentMethod || 'Simulated Payment Gateway'}</span>
+          {/* Total Calculation & Slip Receipt Preview */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center space-x-2 text-green-600 text-xs font-medium">
+                <CheckCircle className="w-4 h-4" />
+                <span>Payment Method: {order.paymentMethod || 'Bank Deposit / Slip Upload'}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-gray-500 block">Total Amount</span>
+                <span className="text-2xl font-black text-indigo-900">${order.totalAmount?.toFixed(2)}</span>
+              </div>
             </div>
-            <div className="text-right">
-              <span className="text-xs text-gray-500 block">Total Paid Amount</span>
-              <span className="text-2xl font-black text-indigo-900">${order.totalAmount?.toFixed(2)}</span>
-            </div>
+
+            {order.paymentSlipUrl && (
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
+                <span className="font-bold text-slate-700 block">Attached Bank Deposit Payment Slip Receipt:</span>
+                <img 
+                  src={order.paymentSlipUrl} 
+                  alt="Bank Deposit Slip Receipt" 
+                  className="max-h-48 rounded-lg border border-slate-300 shadow-sm object-contain"
+                />
+              </div>
+            )}
           </div>
 
           {/* Footer Note */}

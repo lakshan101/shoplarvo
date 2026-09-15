@@ -59,13 +59,20 @@ const createOrder = async (req, res, next) => {
       });
     }
 
+    const { orderItems, shippingAddress, paymentMethod, paymentSlipUrl, totalAmount } = req.body;
+
+    if (!orderItems || orderItems.length === 0) {
+      return res.status(400).json({ success: false, message: 'No order items provided' });
+    }
+
     const trackingNumber = 'SH-TRK-' + Math.floor(10000 + Math.random() * 90000);
 
     const order = await Order.create({
       user: req.user.id,
       orderItems,
       shippingAddress,
-      paymentMethod: paymentMethod || 'Credit Card',
+      paymentMethod: paymentMethod || 'Bank Transfer (Slip Uploaded)',
+      paymentSlipUrl: paymentSlipUrl || '',
       totalAmount,
       status: 'Pending Payment',
       trackingNumber
