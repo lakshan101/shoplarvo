@@ -121,9 +121,86 @@ const updateOrderStatus = async (req, res, next) => {
   }
 };
 
+// @desc    Submit a return request within 2 days (US21)
+// @route   POST /api/orders/:id/return
+// @access  Private/Customer
+const requestReturn = async (req, res, next) => {
+  try {
+    const { returnReason } = req.body;
+    const User = require('../models/User');
+
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      if (order.user.toString() !== req.user.id) {
+        return res.status(403).json({ success: false, message: 'Not authorized to return this order' });
+      }
+
+      order.returnStatus = 'Requested';
+      order.returnReason = returnReason || 'Damaged or wrong item';
+      order.returnRequestedAt = new Date();
+      await order.save();
+
+      return res.json({ success: true, message: 'Return request submitted successfully', order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Requested';
+      order.returnReason = returnReason || 'Damaged or wrong item';
+      order.returnRequestedAt = new Date();
+      return res.json({ success: true, message: 'Return request submitted successfully', order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin approve or reject return & award reward points (US22, US23)
+// @route   PUT /api/orders/:id/return-status
+// @access  Private/Admin
+const handleReturnStatus = async (req, res, next) => {
+  try {
+    const { returnStatus } = req.body; // 'Approved' or 'Rejected'
+    const User = require('../models/User');
+
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = returnStatus;
+      await order.save();
+
+      // If approved, automatically credit store reward points to user account (US23)
+      if (returnStatus === 'Approved') {
+        const pointsEarned = Math.round(order.totalAmount * 10); // 10 points per 1 USD
+        await User.findByIdAndUpdate(order.user, {
+          $inc: { rewardPoints: pointsEarned }
+        });
+      }
+
+      return res.json({ 
+        success: true, 
+        message: `Return request ${returnStatus.toLowerCase()}${returnStatus === 'Approved' ? ' and reward points credited' : ''}`, 
+        order 
+      });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+      order.returnStatus = returnStatus;
+      return res.json({ success: true, message: `Return request ${returnStatus.toLowerCase()}`, order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createOrder,
   getMyOrders,
   getAllOrders,
-  updateOrderStatus
+  updateOrderStatus,
+  requestReturn,
+  handleReturnStatus
 };

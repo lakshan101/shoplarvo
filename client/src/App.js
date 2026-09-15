@@ -13,6 +13,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import UserProfile from './pages/UserProfile';
 import AdminPortal from './pages/AdminPortal';
+import SupplierManagement from './pages/SupplierManagement';
 
 // Customer Authentication Screens
 import Login from './epics/E1_CustomerManagement/Login';
@@ -50,6 +51,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin', 'staff']}>
                     <AdminPortal />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/suppliers" 
+                element={
+                  <ProtectedRoute allowedRoles={['admin', 'staff']}>
+                    <SupplierManagement />
                   </ProtectedRoute>
                 } 
               />
