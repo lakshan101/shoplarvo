@@ -1,5 +1,15 @@
 const mongoose = require('mongoose');
 const Product = require('../models/Product');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 const fallbackProducts = [
   {
@@ -98,7 +108,8 @@ const withLowStock = (product) => {
 
 const getProducts = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const products = await Product.find().sort({ createdAt: -1 });
       return res.json({ success: true, count: products.length, products: products.map(withLowStock) });
     } else {
@@ -111,7 +122,8 @@ const getProducts = async (req, res, next) => {
 
 const getProductById = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const product = await Product.findById(req.params.id);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
       return res.json({ success: true, product: withLowStock(product) });
@@ -127,7 +139,8 @@ const getProductById = async (req, res, next) => {
 
 const createProduct = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const product = await Product.create(req.body);
       return res.status(201).json({ success: true, message: 'Product created in MongoDB Atlas', product });
     } else {
@@ -142,7 +155,8 @@ const createProduct = async (req, res, next) => {
 
 const updateProduct = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const product = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
       return res.json({ success: true, message: 'Product updated successfully', product });
@@ -161,7 +175,8 @@ const updateProduct = async (req, res, next) => {
 
 const deleteProduct = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const product = await Product.findByIdAndDelete(req.params.id);
       if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
       return res.json({ success: true, message: 'Product deleted successfully' });
@@ -192,7 +207,8 @@ const adjustStock = async (req, res, next) => {
       });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       // --- MongoDB path: atomic $inc with a floor guard ---
       // First check that the resulting stock would not go negative
       const current = await Product.findById(req.params.id).select('stockCount lowStockThreshold title');

@@ -1,5 +1,15 @@
 const mongoose = require('mongoose');
 const Category = require('../models/Category');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 const fallbackCategories = [
   { name: 'Streetwear & Hoodies', slug: 'streetwear-hoodies', description: 'Modern Urban Fashion & Oversized Hoodies' },
@@ -11,7 +21,8 @@ const fallbackCategories = [
 
 const getCategories = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const categories = await Category.find();
       return res.json({ success: true, count: categories.length, categories });
     } else {

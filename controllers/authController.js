@@ -2,6 +2,16 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 // Helper to validate name (letters & spaces, 2-50 chars)
 const isValidName = (name) => {
@@ -129,7 +139,8 @@ const checkEmail = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid Email Address format.' });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
       if (existingUser) {
         return res.json({ exists: true, message: 'User with this email already exists.' });
@@ -178,9 +189,8 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid Secondary Phone format.' });
     }
 
-    const userRole = role === 'admin' || role === 'staff' ? role : 'customer';
-
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       let existingUser = await User.findOne({ email: email.toLowerCase().trim() });
       if (existingUser) {
         return res.status(400).json({ success: false, message: 'User with this email already exists.' });
@@ -257,7 +267,8 @@ const loginUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please enter your password.' });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findOne({ email: email.toLowerCase().trim() });
       if (!user || !(await user.matchPassword(password))) {
         return res.status(401).json({ success: false, message: 'Invalid credentials: Email or password incorrect.' });
@@ -307,7 +318,8 @@ const loginUser = async (req, res, next) => {
 
 const getUserProfile = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findById(req.user.id).select('-password');
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
       return res.json({ success: true, user });
@@ -341,7 +353,8 @@ const updateUserProfile = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Secondary phone number format is invalid.' });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findById(req.user.id);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -387,7 +400,8 @@ const changePassword = async (req, res, next) => {
       return res.status(400).json({ success: false, message: checkNew.message });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findById(req.user.id);
       if (!user || !(await user.matchPassword(currentPassword))) {
         return res.status(401).json({ success: false, message: 'Current password is incorrect.' });
@@ -415,7 +429,8 @@ const addAddress = async (req, res, next) => {
     const { street, city, state, zipCode, country, isDefault } = req.body;
     if (!street || !city) return res.status(400).json({ success: false, message: 'Street and City are required.' });
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findById(req.user.id);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -441,7 +456,8 @@ const updateAddress = async (req, res, next) => {
     const addressId = req.params.id;
     const { street, city, state, zipCode, country, isDefault } = req.body;
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const user = await User.findById(req.user.id);
       if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
@@ -482,7 +498,8 @@ const updateAddress = async (req, res, next) => {
 
 const getAllCustomers = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const customers = await User.find().select('-password').sort({ createdAt: -1 });
       return res.json({ success: true, count: customers.length, customers });
     } else {

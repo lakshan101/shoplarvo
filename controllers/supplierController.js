@@ -1,12 +1,24 @@
+const mongoose = require('mongoose');
 const Supplier = require('../models/Supplier');
 const PurchaseOrder = require('../models/PurchaseOrder');
 const Product = require('../models/Product');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 // @desc    Get all suppliers
 // @route   GET /api/suppliers
 // @access  Private/Admin/Staff
 const getSuppliers = async (req, res, next) => {
   try {
+    await ensureConnected();
     const { search, category, status } = req.query;
     let query = {};
 
@@ -38,6 +50,7 @@ const getSuppliers = async (req, res, next) => {
 // @access  Private/Admin/Staff
 const getSupplierById = async (req, res, next) => {
   try {
+    await ensureConnected();
     const supplier = await Supplier.findById(req.params.id);
     if (!supplier) {
       return res.status(404).json({ success: false, message: 'Supplier not found' });
@@ -60,6 +73,7 @@ const getSupplierById = async (req, res, next) => {
 // @access  Private/Admin
 const createSupplier = async (req, res, next) => {
   try {
+    await ensureConnected();
     const { name, contactPerson, email, phone, address, categoriesSupplied, rating } = req.body;
 
     const supplierExists = await Supplier.findOne({ email });
@@ -88,6 +102,7 @@ const createSupplier = async (req, res, next) => {
 // @access  Private/Admin
 const updateSupplier = async (req, res, next) => {
   try {
+    await ensureConnected();
     const supplier = await Supplier.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -109,6 +124,7 @@ const updateSupplier = async (req, res, next) => {
 // @access  Private/Admin
 const deleteSupplier = async (req, res, next) => {
   try {
+    await ensureConnected();
     const supplier = await Supplier.findById(req.params.id);
     if (!supplier) {
       return res.status(404).json({ success: false, message: 'Supplier not found' });
@@ -126,6 +142,7 @@ const deleteSupplier = async (req, res, next) => {
 // @access  Private/Admin
 const createPurchaseOrder = async (req, res, next) => {
   try {
+    await ensureConnected();
     const { supplierId, items, expectedDeliveryDate, notes } = req.body;
 
     const supplier = await Supplier.findById(supplierId);
@@ -177,6 +194,7 @@ const createPurchaseOrder = async (req, res, next) => {
 // @access  Private/Admin/Staff
 const getPurchaseOrders = async (req, res, next) => {
   try {
+    await ensureConnected();
     const purchaseOrders = await PurchaseOrder.find()
       .populate('supplier', 'name email phone')
       .sort({ createdAt: -1 });
@@ -192,6 +210,7 @@ const getPurchaseOrders = async (req, res, next) => {
 // @access  Private/Admin/Staff
 const receiveDelivery = async (req, res, next) => {
   try {
+    await ensureConnected();
     const { itemsReceived } = req.body; // Array of { itemId, quantityReceived }
     const purchaseOrder = await PurchaseOrder.findById(req.params.id);
 

@@ -2,6 +2,16 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 const memoryEmployees = [
   { _id: 'emp_1', name: 'Alexander Wright', email: 'alex@stylehub.com', department: 'Fashion Design', designation: 'Lead Stylist', salary: 4500.00, hireDate: '2024-01-15' },
@@ -15,7 +25,8 @@ const memoryCoupons = [
 
 const getAdminStats = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       // 1. Total revenue excluding cancelled orders
       const revenueAgg = await Order.aggregate([
         { $match: { status: { $ne: 'Cancelled' } } },

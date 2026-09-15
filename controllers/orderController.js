@@ -1,6 +1,16 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const User = require('../models/User');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 const memoryOrders = [
   {
@@ -50,12 +60,13 @@ const createOrder = async (req, res, next) => {
     const trackingNumber = 'SH-TRK-' + Math.floor(10000 + Math.random() * 90000);
     const userId = req.user ? req.user.id : null;
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.create({
         user: userId,
-        customerName: req.user ? req.user.name : 'Valued Customer',
-        customerEmail: req.user ? req.user.email : 'customer@larvofashion.com',
-        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : '+94 77 123 4567',
+        customerName: req.user ? req.user.name : (shippingAddress?.name || 'Valued Customer'),
+        customerEmail: req.user ? req.user.email : (shippingAddress?.email || 'customer@larvofashion.com'),
+        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : (shippingAddress?.phone || '+94 77 123 4567'),
         orderItems,
         shippingAddress,
         paymentMethod: paymentMethod || 'Bank Deposit / Slip Upload',
@@ -69,9 +80,9 @@ const createOrder = async (req, res, next) => {
       const newOrder = {
         _id: 'ord_' + Date.now(),
         user: userId || 'usr_customer',
-        customerName: req.user ? req.user.name : 'Valued Customer',
-        customerEmail: req.user ? req.user.email : 'customer@larvofashion.com',
-        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : '+94 77 123 4567',
+        customerName: req.user ? req.user.name : (shippingAddress?.name || 'Valued Customer'),
+        customerEmail: req.user ? req.user.email : (shippingAddress?.email || 'customer@larvofashion.com'),
+        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : (shippingAddress?.phone || '+94 77 123 4567'),
         orderItems,
         shippingAddress,
         paymentMethod: paymentMethod || 'Bank Deposit / Slip Upload',
@@ -95,7 +106,8 @@ const createOrder = async (req, res, next) => {
 // @access  Private
 const getMyOrders = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const orders = await Order.find({ 
         $or: [{ user: req.user.id }, { customerEmail: req.user.email }] 
       }).sort({ createdAt: -1 });
@@ -114,7 +126,8 @@ const getMyOrders = async (req, res, next) => {
 // @access  Private (Admin / Staff / Managers)
 const getAllOrders = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const orders = await Order.find().populate('user', 'name email phone').sort({ createdAt: -1 });
       return res.json({ success: true, count: orders.length, orders });
     } else {
@@ -133,7 +146,8 @@ const approvePayment = async (req, res, next) => {
     const { action } = req.body; // 'Approve' or 'Reject'
     const newStatus = action === 'Reject' ? 'Cancelled' : 'Payment Approved - Ready for Packing';
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -164,7 +178,8 @@ const updateOrderStatus = async (req, res, next) => {
   try {
     const { status, trackingNumber, deliveryNotes } = req.body;
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -196,7 +211,8 @@ const requestReturn = async (req, res, next) => {
   try {
     const { returnReason, damageImageUrl } = req.body;
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -230,7 +246,8 @@ const approveReturnPickup = async (req, res, next) => {
     const { action } = req.body; // 'Approve' or 'Reject'
     const newReturnStatus = action === 'Reject' ? 'Rejected' : 'Pickup Scheduled';
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -255,7 +272,8 @@ const approveReturnPickup = async (req, res, next) => {
 // @access  Private (Delivery Manager / Admin)
 const markReturnCollected = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
@@ -282,7 +300,8 @@ const markReturnCollected = async (req, res, next) => {
 // @access  Private (Admin)
 const releaseRewardPointsRefund = async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 

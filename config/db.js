@@ -8,21 +8,20 @@ try {
   // fallback if system DNS is restricted
 }
 
-// Disable buffering so failed queries return immediate error instead of stalling
-mongoose.set('bufferCommands', false);
-
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
-    return;
+    return mongoose.connection;
   }
   try {
     const mongoUri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/stylehub_db';
     const conn = await mongoose.connect(mongoUri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
     });
     console.log(`[MongoDB Atlas] Successfully connected to host: ${conn.connection.host}`);
+    return conn;
   } catch (error) {
-    console.warn(`[MongoDB Notice] Live database connection skipped (${error.message}). Operating with memory database state for instant demo capability.`);
+    console.warn(`[MongoDB Notice] Live database connection warning (${error.message}).`);
+    throw error;
   }
 };
 

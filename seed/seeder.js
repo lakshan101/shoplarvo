@@ -155,9 +155,25 @@ const seedData = async () => {
       ]
     });
 
+    const paymentManager = await User.create({
+      name: 'Payment Manager',
+      email: 'payment@larvofashion.com',
+      password: 'Payment#2026',
+      role: 'payment_manager',
+      phone: '+94 77 999 0000'
+    });
+
+    const deliveryManager = await User.create({
+      name: 'Delivery Manager',
+      email: 'delivery@larvofashion.com',
+      password: 'Delivery#2026',
+      role: 'delivery_manager',
+      phone: '+94 70 888 9999'
+    });
+
     console.log('[Seeder SUCCESS] MongoDB Atlas populated with Categories, Products, and Users!');
     console.log(`[Seeder Database URI] ${mongoUri}`);
-    console.log(`[Seeder Accounts] Admin: admin@stylehub.com | Customer: sarah@example.com`);
+    console.log(`[Seeder Accounts] Admin: admin@stylehub.com | Payment: payment@larvofashion.com | Delivery: delivery@larvofashion.com | Customer: sarah@example.com`);
   } catch (error) {
     console.error('[Seeder Error]', error.message);
   } finally {

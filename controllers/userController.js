@@ -1,5 +1,15 @@
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const connectDB = require('../config/db');
+
+const ensureConnected = async () => {
+  if (mongoose.connection.readyState !== 1) {
+    try {
+      await connectDB();
+    } catch (e) {}
+  }
+  return mongoose.connection.readyState === 1;
+};
 
 // Reference to memoryUsers in authController for fallback mode
 const authController = require('./authController');
@@ -14,7 +24,8 @@ const getUsers = async (req, res, next) => {
     const search = (req.query.search || '').trim();
     const roleFilter = (req.query.role || '').trim().toLowerCase();
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       // --- MongoDB path ---
       const query = {};
 
@@ -100,7 +111,8 @@ const toggleUserStatus = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'You cannot deactivate your own account.' });
     }
 
-    if (mongoose.connection.readyState === 1) {
+    const isDb = await ensureConnected();
+    if (isDb) {
       // --- MongoDB path ---
       const user = await User.findById(userId).select('-password');
       if (!user) {
