@@ -7,7 +7,9 @@ import CustomerList from '../epics/E1_CustomerManagement/CustomerList';
 import EmployeeManager from '../epics/E4_AdminAndReports/EmployeeManager';
 import CouponManager from '../epics/E4_AdminAndReports/CouponManager';
 import AIRecommendationWidget from '../epics/E4_AdminAndReports/AIRecommendationWidget';
-import { Shield, LayoutDashboard, Package, Users, Tag, Cpu, UserCheck } from 'lucide-react';
+import SupplierManagement from './SupplierManagement';
+import ReturnsManager from '../epics/E1_CustomerManagement/ReturnsManager';
+import { Shield, LayoutDashboard, Package, Users, Tag, Cpu, UserCheck, Truck, RefreshCw } from 'lucide-react';
 
 export default function AdminPortal() {
   const { token } = useContext(AuthContext);
@@ -39,6 +41,8 @@ export default function AdminPortal() {
           {[
             { id: 'analytics', label: 'Analytics & AI', icon: LayoutDashboard },
             { id: 'products', label: 'Products & Stock', icon: Package },
+            { id: 'suppliers', label: 'Suppliers (E04)', icon: Truck },
+            { id: 'returns', label: 'Returns & Rewards (E01)', icon: RefreshCw },
             { id: 'customers', label: 'Customers', icon: Users },
             { id: 'employees', label: 'Employees', icon: UserCheck },
             { id: 'coupons', label: 'Coupons Engine', icon: Tag }
@@ -64,6 +68,8 @@ export default function AdminPortal() {
       {/* Tab Contents */}
       {activeTab === 'analytics' && <AdminAnalytics stats={stats} />}
       {activeTab === 'products' && <ManageProducts />}
+      {activeTab === 'suppliers' && <SupplierManagement />}
+      {activeTab === 'returns' && <ReturnsManager />}
       {activeTab === 'customers' && <CustomerList />}
       {activeTab === 'employees' && <EmployeeManager />}
       {activeTab === 'coupons' && <CouponManager />}
