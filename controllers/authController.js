@@ -189,6 +189,8 @@ const registerUser = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Invalid Secondary Phone format.' });
     }
 
+    const userRole = role || 'customer';
+
     const isDb = await ensureConnected();
     if (isDb) {
       let existingUser = await User.findOne({ email: email.toLowerCase().trim() });
