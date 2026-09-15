@@ -10,7 +10,8 @@ import AIRecommendationWidget from '../epics/E4_AdminAndReports/AIRecommendation
 import SupplierManagement from './SupplierManagement';
 import ReturnsManager from '../epics/E1_CustomerManagement/ReturnsManager';
 import DeliveryDashboard from './DeliveryDashboard';
-import { Shield, LayoutDashboard, Package, Users, Tag, Cpu, UserCheck, Truck, RefreshCw } from 'lucide-react';
+import PaymentDashboard from './PaymentDashboard';
+import { Shield, LayoutDashboard, Package, Users, Tag, Cpu, UserCheck, Truck, RefreshCw, CreditCard } from 'lucide-react';
 
 export default function AdminPortal() {
   const { token } = useContext(AuthContext);
@@ -41,6 +42,7 @@ export default function AdminPortal() {
         <div className="flex items-center gap-1 bg-slate-100 p-1.5 rounded-2xl border border-slate-200 overflow-x-auto text-xs font-bold">
           {[
             { id: 'analytics', label: 'Analytics & AI', icon: LayoutDashboard },
+            { id: 'payment', label: 'Payment Manager', icon: CreditCard },
             { id: 'delivery', label: 'Delivery Manager (E01)', icon: Truck },
             { id: 'products', label: 'Products & Stock', icon: Package },
             { id: 'suppliers', label: 'Suppliers (E04)', icon: Truck },
@@ -69,6 +71,7 @@ export default function AdminPortal() {
 
       {/* Tab Contents */}
       {activeTab === 'analytics' && <AdminAnalytics stats={stats} />}
+      {activeTab === 'payment' && <PaymentDashboard />}
       {activeTab === 'delivery' && <DeliveryDashboard />}
       {activeTab === 'products' && <ManageProducts />}
       {activeTab === 'suppliers' && <SupplierManagement />}

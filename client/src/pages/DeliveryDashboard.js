@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { 
   Truck, PackageCheck, Clock, CheckCircle2, Search, MapPin, 
-  Phone, Mail, FileText, AlertCircle, RefreshCw, Save, Shield
+  Phone, Mail, FileText, AlertCircle, RefreshCw, Save, Image, Check, XCircle
 } from 'lucide-react';
 
 export default function DeliveryDashboard() {
@@ -14,6 +14,7 @@ export default function DeliveryDashboard() {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [message, setMessage] = useState('');
   const [selectedSlipUrl, setSelectedSlipUrl] = useState(null);
+  const [selectedDamageUrl, setSelectedDamageUrl] = useState(null);
 
   useEffect(() => {
     fetchDeliveryOrders();
@@ -29,17 +30,20 @@ export default function DeliveryDashboard() {
         const data = await res.json();
         setOrders(data.orders || []);
       } else {
-        // Fallback demo delivery orders
         setOrders([
           {
             _id: 'ord_1001',
             user: { name: 'Digoarachchi S. A.', email: 'student1@sliit.lk', phone: '+94 77 123 4567' },
+            customerName: 'Digoarachchi S. A.',
+            customerEmail: 'student1@sliit.lk',
+            customerPhone: '+94 77 123 4567',
             orderItems: [{ title: 'Urban Cyberpunk Oversized Hoodie', quantity: 2, price: 85.00, selectedSize: 'L', selectedColor: 'Black' }],
             shippingAddress: { street: '45 Galle Road', city: 'Colombo 03', state: 'Western Province', zipCode: '00300', country: 'Sri Lanka' },
             paymentMethod: 'Bank Deposit / Slip Upload',
             paymentSlipUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400',
             totalAmount: 170.00,
-            status: 'Processing',
+            status: 'Payment Approved - Ready for Packing',
+            returnStatus: 'None',
             trackingNumber: 'SH-TRK-98742',
             deliveryNotes: 'Customer requested evening delivery after 5 PM',
             createdAt: new Date()
@@ -71,34 +75,70 @@ export default function DeliveryDashboard() {
       });
 
       if (res.ok) {
-        setMessage(`Order status updated to ${newStatus} successfully!`);
+        setMessage(`Order delivery status updated to ${newStatus}!`);
         fetchDeliveryOrders();
       } else {
         alert('Failed to update delivery status');
       }
     } catch (err) {
-      // Local fallback state update
       setOrders(prev => prev.map(o => o._id === orderId ? { ...o, status: newStatus, trackingNumber: trackingNum } : o));
-      setMessage(`Order status updated to ${newStatus}`);
+      setMessage(`Order delivery status updated to ${newStatus}`);
     } finally {
       setUpdatingOrderId(null);
     }
   };
 
+  const handleApproveReturnPickup = async (orderId, action) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/approve-return-pickup`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ action })
+      });
+      if (res.ok) {
+        setMessage(`Return claim ${action.toLowerCase()}d and courier pickup scheduled!`);
+        fetchDeliveryOrders();
+      }
+    } catch (err) {
+      alert('Return status updated (Local State)');
+    }
+  };
+
+  const handleMarkReturnCollected = async (orderId) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}/mark-return-collected`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        setMessage('Return package collected from customer! Admin can now release reward points.');
+        fetchDeliveryOrders();
+      }
+    } catch (err) {
+      alert('Marked return package collected (Local State)');
+    }
+  };
+
   const filteredOrders = orders.filter(o => {
     const matchesSearch = 
-      (o.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.customerName || o.user?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (o.trackingNumber || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (o._id || '').toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesStatus = statusFilter === 'All' || o.status === statusFilter;
+    const matchesStatus = statusFilter === 'All' || o.status === statusFilter || (statusFilter === 'Returns' && o.returnStatus && o.returnStatus !== 'None');
     return matchesSearch && matchesStatus;
   });
 
   const totalOrdersCount = orders.length;
-  const processingCount = orders.filter(o => o.status === 'Processing' || o.status === 'Pending Payment').length;
-  const shippedCount = orders.filter(o => o.status === 'Shipped').length;
-  const deliveredCount = orders.filter(o => o.status === 'Delivered').length;
+  const readyToPackCount = orders.filter(o => o.status === 'Payment Approved - Ready for Packing').length;
+  const inTransitCount = orders.filter(o => o.status === 'Dispatched to Courier (In Transit)').length;
+  const returnCount = orders.filter(o => o.returnStatus && o.returnStatus !== 'None').length;
 
   return (
     <div className="space-y-8 animate-fade-in py-4 w-full text-slate-900">
@@ -111,9 +151,9 @@ export default function DeliveryDashboard() {
               <Truck className="w-3.5 h-3.5 text-indigo-300" /> Logistics & Delivery Manager Portal
             </span>
           </div>
-          <h1 className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">Delivery Management Dashboard</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">Delivery & Courier Dispatch Manager</h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Track customer orders, manage real-time courier dispatch, verify payment receipts, and update delivery statuses.
+            Pack approved orders, dispatch packages to couriers, track live deliveries, and manage customer return package collections.
           </p>
         </div>
 
@@ -139,8 +179,8 @@ export default function DeliveryDashboard() {
 
         <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs text-amber-600 font-bold uppercase tracking-wider block">Pending Dispatch</span>
-            <span className="text-3xl font-black text-amber-700 mt-1 block">{processingCount}</span>
+            <span className="text-xs text-amber-600 font-bold uppercase tracking-wider block">Approved & Ready to Pack</span>
+            <span className="text-3xl font-black text-amber-700 mt-1 block">{readyToPackCount}</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
             <Clock className="w-6 h-6" />
@@ -149,8 +189,8 @@ export default function DeliveryDashboard() {
 
         <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">In Transit (Shipped)</span>
-            <span className="text-3xl font-black text-blue-700 mt-1 block">{shippedCount}</span>
+            <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">Dispatched to Courier</span>
+            <span className="text-3xl font-black text-blue-700 mt-1 block">{inTransitCount}</span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
             <Truck className="w-6 h-6" />
@@ -159,11 +199,11 @@ export default function DeliveryDashboard() {
 
         <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
-            <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider block">Delivered</span>
-            <span className="text-3xl font-black text-emerald-700 mt-1 block">{deliveredCount}</span>
+            <span className="text-xs text-purple-600 font-bold uppercase tracking-wider block">Return Claims</span>
+            <span className="text-3xl font-black text-purple-700 mt-1 block">{returnCount}</span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">
+            <RefreshCw className="w-6 h-6" />
           </div>
         </div>
       </div>
@@ -185,12 +225,12 @@ export default function DeliveryDashboard() {
             placeholder="Search by customer name, tracking #, order ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none focus:border-slate-900"
+            className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-2.5 pl-10 pr-4 text-slate-900 focus:outline-none"
           />
         </div>
 
         <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto">
-          {['All', 'Processing', 'Shipped', 'Delivered'].map((st) => (
+          {['All', 'Payment Approved - Ready for Packing', 'Dispatched to Courier (In Transit)', 'Successfully Delivered', 'Returns'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -218,29 +258,33 @@ export default function DeliveryDashboard() {
               key={ord._id} 
               order={ord} 
               onUpdateStatus={handleUpdateStatus} 
+              onApproveReturnPickup={handleApproveReturnPickup}
+              onMarkReturnCollected={handleMarkReturnCollected}
               isUpdating={updatingOrderId === ord._id}
               onViewSlip={(url) => setSelectedSlipUrl(url)}
+              onViewDamage={(url) => setSelectedDamageUrl(url)}
             />
           ))}
         </div>
       )}
 
-      {/* Bank Slip Modal */}
-      {selectedSlipUrl && (
+      {/* Slip / Damage Image Modal */}
+      {(selectedSlipUrl || selectedDamageUrl) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
           <div className="relative bg-white rounded-3xl border border-slate-200 p-6 max-w-lg w-full shadow-2xl space-y-4">
             <div className="flex justify-between items-center border-b border-slate-200 pb-3">
               <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-600" /> Customer Attached Bank Slip Receipt
+                <Image className="w-4 h-4 text-indigo-600" />
+                <span>{selectedDamageUrl ? 'Customer Uploaded Damage Proof Image' : 'Customer Payment Slip'}</span>
               </h3>
               <button 
-                onClick={() => setSelectedSlipUrl(null)} 
+                onClick={() => { setSelectedSlipUrl(null); setSelectedDamageUrl(null); }} 
                 className="px-3 py-1 bg-slate-900 text-white text-xs font-bold rounded-xl"
               >
                 Close
               </button>
             </div>
-            <img src={selectedSlipUrl} alt="Bank Slip Receipt" className="w-full max-h-96 object-contain rounded-2xl border border-slate-200" />
+            <img src={selectedDamageUrl || selectedSlipUrl} alt="Inspection Proof" className="w-full max-h-96 object-contain rounded-2xl border border-slate-200" />
           </div>
         </div>
       )}
@@ -250,60 +294,74 @@ export default function DeliveryDashboard() {
 }
 
 // Subcomponent for each Delivery Order Card
-function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
-  const [currentStatus, setCurrentStatus] = useState(order.status || 'Processing');
+function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMarkReturnCollected, isUpdating, onViewSlip, onViewDamage }) {
+  const [currentStatus, setCurrentStatus] = useState(order.status || 'Payment Approved - Ready for Packing');
   const [trackingNo, setTrackingNo] = useState(order.trackingNumber || `SH-TRK-${Math.floor(10000 + Math.random() * 90000)}`);
   const [notes, setNotes] = useState(order.deliveryNotes || '');
 
   return (
-    <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-sm hover:shadow-md transition">
+    <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-6 shadow-sm hover:shadow-md transition text-slate-900">
       
-      {/* Top Bar: Customer & Status Badge */}
+      {/* Top Bar: Customer & Status Badges */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
         <div>
           <div className="flex items-center gap-3">
-            <h3 className="text-lg font-extrabold text-slate-900">{order.user?.name || 'Customer Order'}</h3>
+            <h3 className="text-lg font-extrabold text-slate-900">{order.customerName || order.user?.name || 'Customer Order'}</h3>
             <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-              currentStatus === 'Delivered'
+              currentStatus === 'Successfully Delivered'
                 ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                : currentStatus === 'Shipped'
+                : currentStatus === 'Dispatched to Courier (In Transit)'
                 ? 'bg-blue-100 text-blue-800 border border-blue-200'
                 : 'bg-amber-100 text-amber-800 border border-amber-200'
             }`}>
               {currentStatus}
             </span>
+
+            {order.returnStatus && order.returnStatus !== 'None' && (
+              <span className="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-100 text-purple-900 border border-purple-200">
+                Return: {order.returnStatus}
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 mt-1">Order ID: #{order._id}</p>
         </div>
 
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {order.paymentSlipUrl && (
             <button
               onClick={() => onViewSlip(order.paymentSlipUrl)}
-              className="px-3 py-2 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold hover:bg-indigo-100 transition flex items-center gap-1"
             >
-              <FileText className="w-4 h-4" /> View Payment Slip
+              <FileText className="w-3.5 h-3.5" /> Payment Slip
+            </button>
+          )}
+
+          {order.damageImageUrl && (
+            <button
+              onClick={() => onViewDamage(order.damageImageUrl)}
+              className="px-3 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-bold hover:bg-red-100 transition flex items-center gap-1"
+            >
+              <Image className="w-3.5 h-3.5" /> Damage Proof Image
             </button>
           )}
 
           <select
             value={currentStatus}
             onChange={(e) => setCurrentStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-slate-900"
+            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none"
           >
-            <option value="Pending Payment">Pending Payment</option>
-            <option value="Processing">Processing / Dispatch</option>
-            <option value="Shipped">Shipped (In Transit)</option>
-            <option value="Delivered">Delivered</option>
+            <option value="Payment Approved - Ready for Packing">1. Approved - Packing Package</option>
+            <option value="Dispatched to Courier (In Transit)">2. Dispatched to Courier</option>
+            <option value="Successfully Delivered">3. Successfully Delivered</option>
             <option value="Cancelled">Cancelled</option>
           </select>
         </div>
       </div>
 
-      {/* Order Details & Customer Shipping Destination */}
+      {/* Grid: Customer Info, Items, Tracking Control */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 text-xs">
         
-        {/* Customer Contact & Address */}
+        {/* Customer Address & Contact */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
           <h4 className="font-extrabold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
             <MapPin className="w-4 h-4 text-indigo-600" /> Shipping Destination
@@ -313,15 +371,15 @@ function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
           <p className="text-slate-600 font-semibold">{order.shippingAddress?.country || 'Sri Lanka'}</p>
           <div className="pt-2 border-t border-slate-200/80 space-y-1 text-[11px]">
             <p className="flex items-center gap-1 text-slate-700 font-semibold">
-              <Phone className="w-3.5 h-3.5 text-blue-600" /> Phone: {order.user?.phone || '+94 77 123 4567'}
+              <Phone className="w-3.5 h-3.5 text-blue-600" /> Phone: {order.customerPhone || order.user?.phone || '+94 77 123 4567'}
             </p>
             <p className="flex items-center gap-1 text-slate-600">
-              <Mail className="w-3.5 h-3.5 text-indigo-600" /> {order.user?.email}
+              <Mail className="w-3.5 h-3.5 text-indigo-600" /> {order.customerEmail || order.user?.email}
             </p>
           </div>
         </div>
 
-        {/* Itemized Order Summary */}
+        {/* Item Summary */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
           <h4 className="font-extrabold text-slate-900 uppercase tracking-wider text-[11px]">
             Order Items ({order.orderItems?.length || 0})
@@ -330,7 +388,7 @@ function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
             {order.orderItems?.map((it, i) => (
               <div key={i} className="flex justify-between items-center text-[11px] border-b border-slate-200/60 pb-1.5">
                 <span className="font-semibold text-slate-800">{it.title} (Size: {it.selectedSize})</span>
-                <span className="font-bold text-slate-900">x{it.quantity} (${(it.price * it.quantity).toFixed(2)})</span>
+                <span className="font-bold text-slate-900">x{it.quantity} (${((it.price || 0) * it.quantity).toFixed(2)})</span>
               </div>
             ))}
           </div>
@@ -340,10 +398,10 @@ function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
           </div>
         </div>
 
-        {/* Courier & Tracking Manager Controls */}
+        {/* Courier Dispatch Controls */}
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
           <h4 className="font-extrabold text-slate-900 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
-            <Truck className="w-4 h-4 text-slate-900" /> Logistics Tracking Control
+            <Truck className="w-4 h-4 text-slate-900" /> Delivery Dispatch Controls
           </h4>
 
           <div>
@@ -357,7 +415,7 @@ function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
           </div>
 
           <div>
-            <label className="block text-[11px] font-bold text-slate-700 mb-1">Delivery Driver / Courier Notes</label>
+            <label className="block text-[11px] font-bold text-slate-700 mb-1">Courier Driver Notes</label>
             <input 
               type="text"
               placeholder="e.g. Leave package with front desk security"
@@ -373,11 +431,66 @@ function DeliveryOrderCard({ order, onUpdateStatus, isUpdating, onViewSlip }) {
             className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-bold text-xs shadow transition flex items-center justify-center gap-1.5"
           >
             <Save className="w-4 h-4" />
-            <span>{isUpdating ? 'Saving...' : 'Save & Update Tracking Status'}</span>
+            <span>{isUpdating ? 'Saving...' : 'Update & Dispatch Package'}</span>
           </button>
         </div>
 
       </div>
+
+      {/* Return Request Management Section */}
+      {order.returnStatus && order.returnStatus !== 'None' && (
+        <div className="p-4 bg-purple-50 border border-purple-200 rounded-2xl space-y-3 text-xs">
+          <div className="flex justify-between items-center font-bold text-purple-900">
+            <span>Customer Return Claim: "{order.returnReason || 'Damaged Item'}"</span>
+            <span className="bg-purple-200 text-purple-900 px-3 py-1 rounded-full text-[10px] uppercase font-extrabold">
+              {order.returnStatus}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {order.damageImageUrl && (
+              <button
+                onClick={() => onViewDamage(order.damageImageUrl)}
+                className="text-purple-700 font-bold underline flex items-center gap-1"
+              >
+                <Image className="w-4 h-4" /> View Customer Damage Proof Screenshot
+              </button>
+            )}
+
+            {order.returnStatus === 'Requested' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => onApproveReturnPickup(order._id, 'Approve')}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow"
+                >
+                  Approve Return & Inform Courier Pickup
+                </button>
+                <button
+                  onClick={() => onApproveReturnPickup(order._id, 'Reject')}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow"
+                >
+                  Reject Claim
+                </button>
+              </div>
+            )}
+
+            {order.returnStatus === 'Pickup Scheduled' && (
+              <button
+                onClick={() => onMarkReturnCollected(order._id)}
+                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow flex items-center gap-1"
+              >
+                <Check className="w-4 h-4" /> Confirm Return Package Collected from Customer
+              </button>
+            )}
+
+            {order.returnStatus === 'Return Package Collected' && (
+              <span className="text-emerald-700 font-extrabold flex items-center gap-1">
+                ✓ Package Collected — Ready for Admin Reward Points Refund Release!
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

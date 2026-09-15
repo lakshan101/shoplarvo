@@ -15,6 +15,7 @@ import UserProfile from './pages/UserProfile';
 import AdminPortal from './pages/AdminPortal';
 import SupplierManagement from './pages/SupplierManagement';
 import DeliveryDashboard from './pages/DeliveryDashboard';
+import PaymentDashboard from './pages/PaymentDashboard';
 
 // Customer Authentication Screens
 import Login from './epics/E1_CustomerManagement/Login';
@@ -70,6 +71,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['delivery_manager', 'admin', 'staff']}>
                     <DeliveryDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/payment-dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['payment_manager', 'admin', 'staff']}>
+                    <PaymentDashboard />
                   </ProtectedRoute>
                 } 
               />

@@ -1,64 +1,46 @@
 const mongoose = require('mongoose');
 const Order = require('../models/Order');
-const Product = require('../models/Product');
+const User = require('../models/User');
 
-// No in-memory fallback — orders require MongoDB for data integrity.
-const requireDB = (req, res) => {
-  if (mongoose.connection.readyState !== 1) {
-    res.status(503).json({
-      success: false,
-      message: 'Database unavailable. Order operations require a live MongoDB connection.'
-    });
-    return false;
+const memoryOrders = [
+  {
+    _id: 'ord_1001',
+    user: 'usr_customer',
+    customerName: 'Digoarachchi S. A.',
+    customerEmail: 'student1@sliit.lk',
+    customerPhone: '+94 77 123 4567',
+    orderItems: [
+      {
+        title: 'Urban Cyberpunk Oversized Hoodie',
+        quantity: 1,
+        price: 85.00,
+        selectedSize: 'L',
+        selectedColor: 'Black',
+        image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600'
+      }
+    ],
+    shippingAddress: {
+      street: '45 Galle Road',
+      city: 'Colombo 03',
+      state: 'Western Province',
+      zipCode: '00300',
+      country: 'Sri Lanka'
+    },
+    paymentMethod: 'Bank Deposit / Slip Upload',
+    paymentSlipUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400',
+    totalAmount: 85.00,
+    status: 'Payment Pending (Slip Uploaded)',
+    returnStatus: 'None',
+    trackingNumber: 'SH-TRK-98742',
+    createdAt: new Date()
   }
-  return true;
-};
+];
 
-// @desc    Create a new order
+// @desc    Create a new order (Supports guest or logged-in users)
 // @route   POST /api/orders
-// @access  Authenticated
+// @access  Public / Customer
 const createOrder = async (req, res, next) => {
   try {
-    if (!requireDB(req, res)) return;
-
-    const { orderItems, shippingAddress, paymentMethod, totalAmount } = req.body;
-
-    if (!orderItems || orderItems.length === 0) {
-      return res.status(400).json({ success: false, message: 'No order items provided.' });
-    }
-
-    // --- Stock validation: check every item before creating the order ---
-    const insufficientItems = [];
-
-    for (const item of orderItems) {
-      if (!item.product) {
-        insufficientItems.push({ title: item.title || 'Unknown', reason: 'Missing product reference.' });
-        continue;
-      }
-
-      const product = await Product.findById(item.product).select('title stockCount');
-      if (!product) {
-        insufficientItems.push({ title: item.title || item.product, reason: 'Product not found.' });
-        continue;
-      }
-
-      if (product.stockCount < item.quantity) {
-        insufficientItems.push({
-          title: product.title,
-          requested: item.quantity,
-          available: product.stockCount
-        });
-      }
-    }
-
-    if (insufficientItems.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient stock for one or more items.',
-        insufficientItems
-      });
-    }
-
     const { orderItems, shippingAddress, paymentMethod, paymentSlipUrl, totalAmount } = req.body;
 
     if (!orderItems || orderItems.length === 0) {
@@ -66,122 +48,250 @@ const createOrder = async (req, res, next) => {
     }
 
     const trackingNumber = 'SH-TRK-' + Math.floor(10000 + Math.random() * 90000);
-
-    const order = await Order.create({
-      user: req.user.id,
-      orderItems,
-      shippingAddress,
-      paymentMethod: paymentMethod || 'Bank Transfer (Slip Uploaded)',
-      paymentSlipUrl: paymentSlipUrl || '',
-      totalAmount,
-      status: 'Pending Payment',
-      trackingNumber
-    });
-
-    return res.status(201).json({ success: true, message: 'Order placed successfully', order });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get logged-in user's orders
-// @route   GET /api/orders/my-orders
-// @access  Authenticated
-const getMyOrders = async (req, res, next) => {
-  try {
-    if (!requireDB(req, res)) return;
-
-    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
-    return res.json({ success: true, count: orders.length, orders });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Get all orders (admin)
-// @route   GET /api/orders
-// @access  Admin/Staff
-const getAllOrders = async (req, res, next) => {
-  try {
-    if (!requireDB(req, res)) return;
-
-    const orders = await Order.find().populate('user', 'name email').sort({ createdAt: -1 });
-    return res.json({ success: true, count: orders.length, orders });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Update order status
-// @route   PUT /api/orders/:id/status
-// @access  Admin/Staff
-const updateOrderStatus = async (req, res, next) => {
-  try {
-    if (!requireDB(req, res)) return;
-
-    const { status } = req.body;
-    const order = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true, runValidators: true });
-    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-    return res.json({ success: true, message: 'Order status updated', order });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Submit a return request within 2 days (US21)
-// @route   POST /api/orders/:id/return
-// @access  Private/Customer
-const requestReturn = async (req, res, next) => {
-  try {
-    const { returnReason } = req.body;
-    const User = require('../models/User');
+    const userId = req.user ? req.user.id : null;
 
     if (mongoose.connection.readyState === 1) {
-      const order = await Order.findById(req.params.id);
-      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-
-      if (order.user.toString() !== req.user.id) {
-        return res.status(403).json({ success: false, message: 'Not authorized to return this order' });
-      }
-
-      order.returnStatus = 'Requested';
-      order.returnReason = returnReason || 'Damaged or wrong item';
-      order.returnRequestedAt = new Date();
-      await order.save();
-
-      return res.json({ success: true, message: 'Return request submitted successfully', order });
+      const order = await Order.create({
+        user: userId,
+        customerName: req.user ? req.user.name : 'Valued Customer',
+        customerEmail: req.user ? req.user.email : 'customer@larvofashion.com',
+        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : '+94 77 123 4567',
+        orderItems,
+        shippingAddress,
+        paymentMethod: paymentMethod || 'Bank Deposit / Slip Upload',
+        paymentSlipUrl: paymentSlipUrl || '',
+        totalAmount: totalAmount || 0,
+        status: 'Payment Pending (Slip Uploaded)',
+        trackingNumber
+      });
+      return res.status(201).json({ success: true, message: 'Order placed successfully', order });
     } else {
-      const order = memoryOrders.find(o => o._id === req.params.id);
-      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-
-      order.returnStatus = 'Requested';
-      order.returnReason = returnReason || 'Damaged or wrong item';
-      order.returnRequestedAt = new Date();
-      return res.json({ success: true, message: 'Return request submitted successfully', order });
+      const newOrder = {
+        _id: 'ord_' + Date.now(),
+        user: userId || 'usr_customer',
+        customerName: req.user ? req.user.name : 'Valued Customer',
+        customerEmail: req.user ? req.user.email : 'customer@larvofashion.com',
+        customerPhone: req.user ? (req.user.phone || '+94 77 123 4567') : '+94 77 123 4567',
+        orderItems,
+        shippingAddress,
+        paymentMethod: paymentMethod || 'Bank Deposit / Slip Upload',
+        paymentSlipUrl: paymentSlipUrl || '',
+        totalAmount: totalAmount || 0,
+        status: 'Payment Pending (Slip Uploaded)',
+        returnStatus: 'None',
+        trackingNumber,
+        createdAt: new Date()
+      };
+      memoryOrders.unshift(newOrder);
+      return res.status(201).json({ success: true, message: 'Order placed successfully', order: newOrder });
     }
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Admin approve or reject return & award reward points (US22, US23)
-// @route   PUT /api/orders/:id/return-status
-// @access  Private/Admin
-const handleReturnStatus = async (req, res, next) => {
+// @desc    Get customer's own orders
+// @route   GET /api/orders/my-orders
+// @access  Private
+const getMyOrders = async (req, res, next) => {
   try {
-    const { returnStatus } = req.body; // 'Approved' or 'Rejected'
-    const User = require('../models/User');
+    if (mongoose.connection.readyState === 1) {
+      const orders = await Order.find({ 
+        $or: [{ user: req.user.id }, { customerEmail: req.user.email }] 
+      }).sort({ createdAt: -1 });
+      return res.json({ success: true, count: orders.length, orders });
+    } else {
+      const orders = memoryOrders.filter(o => o.user === req.user.id || o.customerEmail === req.user.email || req.user.role === 'customer');
+      return res.json({ success: true, count: orders.length, orders });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get all orders for Admin, Payment Manager, Delivery Manager
+// @route   GET /api/orders
+// @access  Private (Admin / Staff / Managers)
+const getAllOrders = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const orders = await Order.find().populate('user', 'name email phone').sort({ createdAt: -1 });
+      return res.json({ success: true, count: orders.length, orders });
+    } else {
+      return res.json({ success: true, count: memoryOrders.length, orders: memoryOrders });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Payment Manager approves customer bank payment slip (Stage 1 -> Stage 2)
+// @route   PUT /api/orders/:id/approve-payment
+// @access  Private (Payment Manager / Admin)
+const approvePayment = async (req, res, next) => {
+  try {
+    const { action } = req.body; // 'Approve' or 'Reject'
+    const newStatus = action === 'Reject' ? 'Cancelled' : 'Payment Approved - Ready for Packing';
 
     if (mongoose.connection.readyState === 1) {
       const order = await Order.findById(req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
-      order.returnStatus = returnStatus;
+      order.status = newStatus;
+      order.paymentApprovedBy = req.user ? req.user.email : 'payment@larvofashion.com';
+      order.paymentApprovedAt = new Date();
       await order.save();
 
-      // If approved, automatically credit store reward points to user account (US23)
-      if (returnStatus === 'Approved') {
-        const pointsEarned = Math.round(order.totalAmount * 10); // 10 points per 1 USD
+      return res.json({ success: true, message: `Payment ${action.toLowerCase()}d. Status updated to ${newStatus}`, order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.status = newStatus;
+      order.paymentApprovedBy = req.user ? req.user.email : 'payment@larvofashion.com';
+      order.paymentApprovedAt = new Date();
+      return res.json({ success: true, message: `Payment ${action.toLowerCase()}d. Status updated to ${newStatus}`, order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delivery Manager updates delivery status & tracking info
+// @route   PUT /api/orders/:id/status
+// @access  Private (Delivery Manager / Admin / Staff)
+const updateOrderStatus = async (req, res, next) => {
+  try {
+    const { status, trackingNumber, deliveryNotes } = req.body;
+
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      if (status) order.status = status;
+      if (trackingNumber) order.trackingNumber = trackingNumber;
+      if (deliveryNotes) order.deliveryNotes = deliveryNotes;
+
+      await order.save();
+      return res.json({ success: true, message: `Order delivery status updated to ${status}`, order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      if (status) order.status = status;
+      if (trackingNumber) order.trackingNumber = trackingNumber;
+      if (deliveryNotes) order.deliveryNotes = deliveryNotes;
+
+      return res.json({ success: true, message: `Order delivery status updated to ${status}`, order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Customer submits a return request with reason & damage image proof (US21)
+// @route   POST /api/orders/:id/return
+// @access  Private/Customer
+const requestReturn = async (req, res, next) => {
+  try {
+    const { returnReason, damageImageUrl } = req.body;
+
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Requested';
+      order.returnReason = returnReason || 'Damaged or wrong item';
+      order.damageImageUrl = damageImageUrl || '';
+      order.returnRequestedAt = new Date();
+      await order.save();
+
+      return res.json({ success: true, message: 'Return request submitted with damage proof image', order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Requested';
+      order.returnReason = returnReason || 'Damaged or wrong item';
+      order.damageImageUrl = damageImageUrl || '';
+      order.returnRequestedAt = new Date();
+      return res.json({ success: true, message: 'Return request submitted with damage proof image', order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delivery Manager approves return & schedules courier pickup
+// @route   PUT /api/orders/:id/approve-return-pickup
+// @access  Private (Delivery Manager / Admin)
+const approveReturnPickup = async (req, res, next) => {
+  try {
+    const { action } = req.body; // 'Approve' or 'Reject'
+    const newReturnStatus = action === 'Reject' ? 'Rejected' : 'Pickup Scheduled';
+
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = newReturnStatus;
+      await order.save();
+
+      return res.json({ success: true, message: `Return request ${action.toLowerCase()}d and courier pickup scheduled`, order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = newReturnStatus;
+      return res.json({ success: true, message: `Return request ${action.toLowerCase()}d and courier pickup scheduled`, order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Delivery Manager marks return package collected from customer
+// @route   PUT /api/orders/:id/mark-return-collected
+// @access  Private (Delivery Manager / Admin)
+const markReturnCollected = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Return Package Collected';
+      order.returnCollectedAt = new Date();
+      await order.save();
+
+      return res.json({ success: true, message: 'Return package collected from customer', order });
+    } else {
+      const order = memoryOrders.find(o => o._id === req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Return Package Collected';
+      order.returnCollectedAt = new Date();
+      return res.json({ success: true, message: 'Return package collected from customer', order });
+    }
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Admin releases reward points refund into customer's account (US23)
+// @route   PUT /api/orders/:id/release-reward-points
+// @access  Private (Admin)
+const releaseRewardPointsRefund = async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const order = await Order.findById(req.params.id);
+      if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+      order.returnStatus = 'Approved & Points Credited';
+      await order.save();
+
+      // Calculate reward points refund (10 points per $1 refunded)
+      const pointsEarned = Math.round(order.totalAmount * 10);
+      if (order.user) {
         await User.findByIdAndUpdate(order.user, {
           $inc: { rewardPoints: pointsEarned }
         });
@@ -189,14 +299,22 @@ const handleReturnStatus = async (req, res, next) => {
 
       return res.json({ 
         success: true, 
-        message: `Return request ${returnStatus.toLowerCase()}${returnStatus === 'Approved' ? ' and reward points credited' : ''}`, 
-        order 
+        message: `Refund released! ${pointsEarned} reward points credited to customer account`, 
+        order,
+        pointsEarned
       });
     } else {
       const order = memoryOrders.find(o => o._id === req.params.id);
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
-      order.returnStatus = returnStatus;
-      return res.json({ success: true, message: `Return request ${returnStatus.toLowerCase()}`, order });
+
+      order.returnStatus = 'Approved & Points Credited';
+      const pointsEarned = Math.round(order.totalAmount * 10);
+      return res.json({ 
+        success: true, 
+        message: `Refund released! ${pointsEarned} reward points credited to customer account`, 
+        order,
+        pointsEarned 
+      });
     }
   } catch (error) {
     next(error);
@@ -207,7 +325,10 @@ module.exports = {
   createOrder,
   getMyOrders,
   getAllOrders,
+  approvePayment,
   updateOrderStatus,
   requestReturn,
-  handleReturnStatus
+  approveReturnPickup,
+  markReturnCollected,
+  releaseRewardPointsRefund
 };
