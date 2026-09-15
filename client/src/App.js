@@ -14,6 +14,7 @@ import Contact from './pages/Contact';
 import UserProfile from './pages/UserProfile';
 import AdminPortal from './pages/AdminPortal';
 import SupplierManagement from './pages/SupplierManagement';
+import DeliveryDashboard from './pages/DeliveryDashboard';
 
 // Customer Authentication Screens
 import Login from './epics/E1_CustomerManagement/Login';
@@ -60,6 +61,15 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin', 'staff']}>
                     <SupplierManagement />
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/delivery-dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['delivery_manager', 'admin', 'staff']}>
+                    <DeliveryDashboard />
                   </ProtectedRoute>
                 } 
               />

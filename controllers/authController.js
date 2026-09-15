@@ -65,6 +65,18 @@ const memoryUsers = [
     createdAt: new Date()
   },
   {
+    _id: 'usr_delivery',
+    name: 'Delivery Manager',
+    email: 'delivery@larvofashion.com',
+    passwordHash: bcrypt.hashSync('Delivery#2026', 10),
+    role: 'delivery_manager',
+    phone: '+94 70 888 9999',
+    secondaryPhone: '+94 11 888 7777',
+    isActive: true,
+    addresses: [],
+    createdAt: new Date()
+  },
+  {
     _id: 'usr_customer',
     name: 'Sarah Connor',
     email: 'sarah@example.com',
