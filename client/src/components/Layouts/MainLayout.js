@@ -11,7 +11,7 @@ export default function MainLayout({ children }) {
   const { user, logout } = useContext(AuthContext);
 
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-  const isDashboardPage = location.pathname === '/profile' || location.pathname === '/admin';
+  const isDashboardPage = location.pathname === '/profile' || location.pathname === '/admin' || location.pathname === '/payment-dashboard' || location.pathname === '/delivery-dashboard';
 
   // Distraction-free Login & Register view
   if (isAuthPage) {
