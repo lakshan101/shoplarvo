@@ -230,15 +230,22 @@ export default function DeliveryDashboard() {
         </div>
 
         <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto">
-          {['All', 'Payment Approved - Ready for Packing', 'Dispatched to Courier (In Transit)', 'Successfully Delivered', 'Returns'].map((st) => (
+          {[
+            { id: 'All', label: 'All Orders' },
+            { id: 'Payment Approved - Ready for Packing', label: '1. Packaging Order' },
+            { id: 'Dispatched to Courier (In Transit)', label: '2. Handed to Delivery Company' },
+            { id: 'Out for Customer Delivery', label: '3. Out for Customer Delivery' },
+            { id: 'Successfully Delivered', label: '4. Successfully Delivered' },
+            { id: 'Returns', label: '5. Collect Return Packages' }
+          ].map((st) => (
             <button
-              key={st}
-              onClick={() => setStatusFilter(st)}
+              key={st.id}
+              onClick={() => setStatusFilter(st.id)}
               className={`px-4 py-2 rounded-xl font-bold transition whitespace-nowrap ${
-                statusFilter === st ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600 hover:text-slate-900'
+                statusFilter === st.id ? 'bg-slate-900 text-white shadow' : 'bg-slate-100 text-slate-600 hover:text-slate-900'
               }`}
             >
-              {st}
+              {st.label}
             </button>
           ))}
         </div>
@@ -350,10 +357,11 @@ function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMar
             onChange={(e) => setCurrentStatus(e.target.value)}
             className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none"
           >
-            <option value="Payment Approved - Ready for Packing">1. Approved - Packing Package</option>
-            <option value="Dispatched to Courier (In Transit)">2. Dispatched to Courier</option>
-            <option value="Successfully Delivered">3. Successfully Delivered</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="Payment Approved - Ready for Packing">1. Packaging Order (Item Packing)</option>
+            <option value="Dispatched to Courier (In Transit)">2. Handed Over to Delivery Company</option>
+            <option value="Out for Customer Delivery">3. Out for Customer Delivery</option>
+            <option value="Successfully Delivered">4. Successfully Delivered to Customer</option>
+            <option value="Cancelled">Cancelled Order</option>
           </select>
         </div>
       </div>
@@ -477,9 +485,9 @@ function DeliveryOrderCard({ order, onUpdateStatus, onApproveReturnPickup, onMar
             {order.returnStatus === 'Pickup Scheduled' && (
               <button
                 onClick={() => onMarkReturnCollected(order._id)}
-                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow flex items-center gap-1"
+                className="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl shadow flex items-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Confirm Return Package Collected from Customer
+                <Check className="w-4 h-4" /> Collect Return Package from Customer
               </button>
             )}
 

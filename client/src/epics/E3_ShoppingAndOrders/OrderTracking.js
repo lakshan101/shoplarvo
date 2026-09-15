@@ -17,16 +17,18 @@ export default function OrderTracking({ order, onReturnSubmitted }) {
 
   const stages = [
     { id: 1, key: 'Payment Pending (Slip Uploaded)', label: '1. Payment Verification' },
-    { id: 2, key: 'Payment Approved - Ready for Packing', label: '2. Processing & Packing' },
-    { id: 3, key: 'Dispatched to Courier (In Transit)', label: '3. In Transit (Courier)' },
-    { id: 4, key: 'Successfully Delivered', label: '4. Delivered' }
+    { id: 2, key: 'Payment Approved - Ready for Packing', label: '2. Packaging Order' },
+    { id: 3, key: 'Dispatched to Courier (In Transit)', label: '3. Handed to Delivery Co.' },
+    { id: 4, key: 'Out for Customer Delivery', label: '4. Out for Delivery' },
+    { id: 5, key: 'Successfully Delivered', label: '5. Delivered' }
   ];
 
   const getStageIndex = (status) => {
     if (status === 'Payment Pending (Slip Uploaded)') return 0;
     if (status === 'Payment Approved - Ready for Packing') return 1;
     if (status === 'Dispatched to Courier (In Transit)') return 2;
-    if (status === 'Successfully Delivered') return 3;
+    if (status === 'Out for Customer Delivery') return 3;
+    if (status === 'Successfully Delivered') return 4;
     return 1;
   };
 
