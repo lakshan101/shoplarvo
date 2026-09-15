@@ -3,10 +3,10 @@ import { CartContext } from '../../context/CartContext';
 import { AuthContext } from '../../context/AuthContext';
 import { createOrderApi } from '../../api/orderApi';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, MapPin, Tag, CreditCard, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, MapPin, Tag, CreditCard, Check, ArrowRight, ShieldCheck, Plus, Minus, Trash2 } from 'lucide-react';
 
 export default function CheckoutStepper() {
-  const { cartItems, cartTotal, clearCart } = useContext(CartContext);
+  const { cartItems, cartTotal, subtotal, removeFromCart, updateQuantity, clearCart } = useContext(CartContext);
   const { user, token } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -24,8 +24,9 @@ export default function CheckoutStepper() {
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const discountAmount = (cartTotal * discountPercent) / 100;
-  const finalTotal = Math.max(0, cartTotal - discountAmount);
+  const currentCartTotal = cartTotal || subtotal || 0;
+  const discountAmount = (currentCartTotal * (discountPercent || 0)) / 100;
+  const finalTotal = Math.max(0, currentCartTotal - discountAmount);
 
   const handleApplyCoupon = (e) => {
     e.preventDefault();
@@ -103,17 +104,45 @@ export default function CheckoutStepper() {
 
           <div className="space-y-4">
             {cartItems.map((item, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 gap-4">
                 <div className="flex items-center gap-4">
-                  <img src={item.image} alt={item.title} className="w-14 h-14 rounded-xl object-cover border border-slate-200" />
+                  <img src={item.image} alt={item.title} className="w-16 h-16 rounded-xl object-cover border border-slate-200" />
                   <div>
                     <h4 className="font-bold text-xs text-slate-900">{item.title}</h4>
-                    <p className="text-[11px] text-slate-500">Size: {item.selectedSize} | Color: {item.selectedColor}</p>
-                    <p className="text-xs font-extrabold text-slate-900 mt-1">${item.price.toFixed(2)} × {item.quantity}</p>
+                    <p className="text-[11px] text-slate-500">Size: <span className="font-bold">{item.selectedSize}</span> | Color: <span className="font-bold">{item.selectedColor}</span></p>
+                    <p className="text-xs font-extrabold text-slate-900 mt-1">${(item.price || 0).toFixed(2)}</p>
                   </div>
                 </div>
-                <div className="font-extrabold text-sm text-slate-900">
-                  ${(item.price * item.quantity).toFixed(2)}
+
+                <div className="flex items-center justify-between w-full sm:w-auto gap-6">
+                  {/* Quantity Controls US26 */}
+                  <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
+                    <button 
+                      onClick={() => updateQuantity(idx, item.quantity - 1)}
+                      className="p-1 hover:bg-slate-100 text-slate-600 rounded-lg transition"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="px-3 text-xs font-bold text-slate-900">{item.quantity}</span>
+                    <button 
+                      onClick={() => updateQuantity(idx, item.quantity + 1)}
+                      className="p-1 hover:bg-slate-100 text-slate-600 rounded-lg transition"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="font-extrabold text-sm text-slate-900 min-w-[70px] text-right">
+                    ${((item.price || 0) * item.quantity).toFixed(2)}
+                  </div>
+
+                  <button 
+                    onClick={() => removeFromCart(idx)}
+                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Remove item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -121,7 +150,7 @@ export default function CheckoutStepper() {
 
           <div className="flex justify-between items-center pt-4 border-t border-slate-200">
             <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Subtotal</span>
-            <span className="text-xl font-extrabold text-slate-900">${cartTotal.toFixed(2)}</span>
+            <span className="text-xl font-extrabold text-slate-900">${currentCartTotal.toFixed(2)}</span>
           </div>
 
           <button 

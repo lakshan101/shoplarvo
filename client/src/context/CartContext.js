@@ -60,7 +60,21 @@ export const CartProvider = ({ children }) => {
     return wishlistItems.some(item => item._id === productId);
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const updateQuantity = (index, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(index);
+      return;
+    }
+    setCartItems(prev => {
+      const updated = [...prev];
+      if (updated[index]) {
+        updated[index].quantity = newQuantity;
+      }
+      return updated;
+    });
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
 
   return (
     <CartContext.Provider value={{ 
@@ -70,10 +84,12 @@ export const CartProvider = ({ children }) => {
       setSelectedDepartment,
       addToCart, 
       removeFromCart, 
+      updateQuantity,
       clearCart, 
       toggleWishlist, 
       isInWishlist, 
-      subtotal 
+      subtotal,
+      cartTotal: subtotal
     }}>
       {children}
     </CartContext.Provider>
