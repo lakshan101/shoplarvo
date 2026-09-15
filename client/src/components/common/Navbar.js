@@ -2,7 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { CartContext } from '../../context/CartContext';
-import { ShoppingBag, Heart, LogOut, Shield, Sparkles, Search, Tag, Menu, X, Gem, LogIn } from 'lucide-react';
+import { ShoppingBag, Heart, LogOut, Shield, Sparkles, Search, Tag, Menu, X, Gem, LogIn, CreditCard, Truck } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext);
@@ -81,9 +81,19 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-6 text-slate-600 font-semibold text-[11px] tracking-wider uppercase">
             <Link to="/about" className="hover:text-[#0f172a] transition-colors">About ShopLarvo</Link>
             <Link to="/contact" className="hover:text-[#0f172a] transition-colors">Client Services</Link>
-            {user && (user.role === 'admin' || user.role === 'staff') && (
+            {user && (user.role === 'admin' || user.role === 'staff' || user.email === 'admin@stylehub.com') && (
               <Link to="/admin" className="flex items-center gap-1 text-[#0f172a] font-bold hover:underline bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
                 <Shield className="w-3.5 h-3.5 text-blue-600" /> Admin Portal
+              </Link>
+            )}
+            {user && (user.role === 'payment_manager' || user.email === 'payment@larvofashion.com') && (
+              <Link to="/payment-dashboard" className="flex items-center gap-1 text-emerald-800 font-bold hover:underline bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <CreditCard className="w-3.5 h-3.5 text-emerald-600" /> Payment Manager Portal
+              </Link>
+            )}
+            {user && (user.role === 'delivery_manager' || user.email === 'delivery@larvofashion.com') && (
+              <Link to="/delivery-dashboard" className="flex items-center gap-1 text-amber-800 font-bold hover:underline bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                <Truck className="w-3.5 h-3.5 text-amber-600" /> Delivery Manager Portal
               </Link>
             )}
           </div>
@@ -151,11 +161,22 @@ export default function Navbar() {
             {/* User Account / Single Sign In Header Button */}
             {user ? (
               <div className="flex items-center gap-2 sm:gap-3 border-l border-slate-200 pl-2.5 sm:pl-4">
-                <Link to="/profile" className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl">
+                <Link 
+                  to={
+                    user.role === 'payment_manager' || user.email === 'payment@larvofashion.com' 
+                      ? '/payment-dashboard' 
+                      : user.role === 'delivery_manager' || user.email === 'delivery@larvofashion.com'
+                      ? '/delivery-dashboard'
+                      : user.role === 'admin' || user.role === 'staff'
+                      ? '/admin'
+                      : '/profile'
+                  } 
+                  className="flex items-center gap-2 text-xs font-bold text-slate-800 hover:text-slate-900 transition-colors bg-slate-100 border border-slate-200 px-2.5 sm:px-3 py-1.5 rounded-xl"
+                >
                   <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow">
                     {user.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
-                  <span className="hidden sm:inline">{user.name.split(' ')[0]}</span>
+                  <span className="hidden sm:inline">{user.name ? user.name.split(' ')[0] : 'User'}</span>
                 </Link>
                 <button 
                   onClick={() => { logout(); navigate('/login'); }}

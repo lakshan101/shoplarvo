@@ -9,8 +9,17 @@ export default function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
+  if (allowedRoles && user) {
+    const role = user.role;
+    const userEmail = (user.email || '').toLowerCase();
+    const isAllowed = allowedRoles.includes(role) ||
+      (allowedRoles.includes('payment_manager') && userEmail === 'payment@larvofashion.com') ||
+      (allowedRoles.includes('delivery_manager') && userEmail === 'delivery@larvofashion.com') ||
+      (allowedRoles.includes('admin') && userEmail === 'admin@stylehub.com');
+
+    if (!isAllowed) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return children;

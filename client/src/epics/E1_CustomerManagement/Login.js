@@ -23,7 +23,18 @@ export default function Login() {
 
     const res = await login(email.trim(), password);
     if (res.success) {
-      navigate('/');
+      const role = res.user?.role;
+      const userEmail = (res.user?.email || email.trim()).toLowerCase();
+
+      if (role === 'payment_manager' || userEmail === 'payment@larvofashion.com') {
+        navigate('/payment-dashboard');
+      } else if (role === 'delivery_manager' || userEmail === 'delivery@larvofashion.com') {
+        navigate('/delivery-dashboard');
+      } else if (role === 'admin' || role === 'staff' || userEmail === 'admin@stylehub.com') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } else {
       setError(res.message || 'Login failed. Please check credentials.');
     }
