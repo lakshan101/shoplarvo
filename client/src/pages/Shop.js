@@ -357,8 +357,8 @@ export default function Shop() {
                       <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                         <span className="text-slate-500 font-medium">Sizes: {product.sizes.join(', ')}</span>
                         <button
-                          onClick={() => addToCart(product, product.sizes[0], product.colors[0], 1)}
-                          className="px-3.5 py-1.5 rounded-xl gradient-button text-white font-bold flex items-center gap-1 shadow"
+                          onClick={() => setQuickViewProduct(product)}
+                          className="px-3.5 py-1.5 rounded-xl gradient-button text-white font-bold flex items-center gap-1 shadow hover:scale-105 transition-all"
                         >
                           <ShoppingBag className="w-3.5 h-3.5" /> ADD
                         </button>
