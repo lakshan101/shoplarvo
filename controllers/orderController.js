@@ -75,6 +75,7 @@ const createOrder = async (req, res, next) => {
         status: 'Payment Pending (Slip Uploaded)',
         trackingNumber
       });
+      console.log(`[Order API] Created order ${order._id} in MongoDB Atlas for ${order.customerEmail}`);
       return res.status(201).json({ success: true, message: 'Order placed successfully', order });
     } else {
       const newOrder = {
@@ -97,6 +98,7 @@ const createOrder = async (req, res, next) => {
       return res.status(201).json({ success: true, message: 'Order placed successfully', order: newOrder });
     }
   } catch (error) {
+    console.error('[Order API Error]', error);
     next(error);
   }
 };
@@ -108,9 +110,13 @@ const getMyOrders = async (req, res, next) => {
   try {
     const isDb = await ensureConnected();
     if (isDb) {
-      const orders = await Order.find({ 
-        $or: [{ user: req.user.id }, { customerEmail: req.user.email }] 
-      }).sort({ createdAt: -1 });
+      const queryList = [];
+      if (req.user) {
+        if (req.user.id) queryList.push({ user: req.user.id });
+        if (req.user.email) queryList.push({ customerEmail: req.user.email });
+      }
+      const filter = queryList.length > 0 ? { $or: queryList } : {};
+      const orders = await Order.find(filter).sort({ createdAt: -1 });
       return res.json({ success: true, count: orders.length, orders });
     } else {
       const orders = memoryOrders.filter(o => o.user === req.user.id || o.customerEmail === req.user.email || req.user.role === 'customer');
@@ -128,7 +134,7 @@ const getAllOrders = async (req, res, next) => {
   try {
     const isDb = await ensureConnected();
     if (isDb) {
-      const orders = await Order.find().populate('user', 'name email phone').sort({ createdAt: -1 });
+      const orders = await Order.find().sort({ createdAt: -1 });
       return res.json({ success: true, count: orders.length, orders });
     } else {
       return res.json({ success: true, count: memoryOrders.length, orders: memoryOrders });

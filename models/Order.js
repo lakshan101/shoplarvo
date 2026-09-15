@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
-  product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  product: { type: mongoose.Schema.Types.Mixed },
   title: { type: String, required: true },
   quantity: { type: Number, required: true, default: 1 },
   price: { type: Number, required: true },
@@ -11,7 +11,7 @@ const orderItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  user: { type: mongoose.Schema.Types.Mixed },
   customerName: { type: String, default: 'Valued Customer' },
   customerEmail: { type: String, default: 'customer@larvofashion.com' },
   customerPhone: { type: String, default: '+94 77 123 4567' },
