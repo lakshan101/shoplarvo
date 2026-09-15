@@ -106,12 +106,25 @@ export default function PaymentDashboard() {
           </p>
         </div>
 
-        <button
-          onClick={fetchPaymentOrders}
-          className="px-4 py-2.5 rounded-2xl bg-[#0f172a] text-white font-bold text-xs shadow hover:bg-emerald-600 transition flex items-center gap-1.5"
-        >
-          <RefreshCw className="w-4 h-4" /> Refresh Payments
-        </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full md:w-auto">
+          {/* Account Credentials Badge */}
+          <div className="flex items-center gap-3 bg-[#0f172a] text-white p-3.5 px-4 rounded-2xl border border-slate-800 shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow">
+              PM
+            </div>
+            <div className="text-xs">
+              <span className="font-extrabold block text-white">Payment Manager</span>
+              <span className="text-emerald-400 font-mono text-[11px]">payment@larvofashion.com</span>
+            </div>
+          </div>
+
+          <button
+            onClick={fetchPaymentOrders}
+            className="px-4 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5"
+          >
+            <RefreshCw className="w-4 h-4" /> Refresh Payments
+          </button>
+        </div>
       </div>
 
       {/* Metrics */}
