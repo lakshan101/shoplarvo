@@ -60,7 +60,7 @@ export default function InvoiceView({ order }) {
               <td className="py-3 px-4 font-bold text-slate-900">{item.title}</td>
               <td className="py-3 px-4 text-slate-500">{item.selectedSize} / {item.selectedColor}</td>
               <td className="py-3 px-4 font-bold text-slate-900">{item.quantity}</td>
-              <td className="py-3 px-4 text-right font-extrabold text-slate-900">${(item.price * item.quantity).toFixed(2)}</td>
+              <td className="py-3 px-4 text-right font-extrabold text-slate-900">Rs. {(item.price * item.quantity).toFixed(2)}</td>
             </tr>
           ))}
         </tbody>
@@ -73,7 +73,7 @@ export default function InvoiceView({ order }) {
         </button>
         <div className="text-right">
           <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block">Grand Total</span>
-          <span className="text-2xl font-extrabold text-slate-900">${order.totalAmount?.toFixed(2)}</span>
+          <span className="text-2xl font-extrabold text-slate-900">Rs. {order.totalAmount?.toFixed(2)}</span>
         </div>
       </div>
 

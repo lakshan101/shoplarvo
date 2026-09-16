@@ -347,9 +347,9 @@ export default function Shop() {
                           {product.title}
                         </h3>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-lg font-extrabold text-slate-900">${product.price.toFixed(2)}</span>
+                          <span className="text-lg font-extrabold text-slate-900">Rs. {product.price.toFixed(2)}</span>
                           {product.originalPrice && (
-                            <span className="text-xs text-slate-400 line-through">${product.originalPrice.toFixed(2)}</span>
+                            <span className="text-xs text-slate-400 line-through">Rs. {product.originalPrice.toFixed(2)}</span>
                           )}
                         </div>
                       </div>

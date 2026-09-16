@@ -314,8 +314,8 @@ const releaseRewardPointsRefund = async (req, res, next) => {
       order.returnStatus = 'Approved & Points Credited';
       await order.save();
 
-      // Calculate reward points refund (10 points per $1 refunded)
-      const pointsEarned = Math.round(order.totalAmount * 10);
+      // Calculate 1:1 reward points refund (1 point per Rs. 1 returned)
+      const pointsEarned = Math.round(order.totalAmount || 0);
       if (order.user) {
         await User.findByIdAndUpdate(order.user, {
           $inc: { rewardPoints: pointsEarned }
@@ -324,7 +324,7 @@ const releaseRewardPointsRefund = async (req, res, next) => {
 
       return res.json({ 
         success: true, 
-        message: `Refund released! ${pointsEarned} reward points credited to customer account`, 
+        message: `Refund released! ${pointsEarned} Store Reward Points (Rs. ${pointsEarned}) credited to customer account`, 
         order,
         pointsEarned
       });
@@ -333,10 +333,10 @@ const releaseRewardPointsRefund = async (req, res, next) => {
       if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
       order.returnStatus = 'Approved & Points Credited';
-      const pointsEarned = Math.round(order.totalAmount * 10);
+      const pointsEarned = Math.round(order.totalAmount || 0);
       return res.json({ 
         success: true, 
-        message: `Refund released! ${pointsEarned} reward points credited to customer account`, 
+        message: `Refund released! ${pointsEarned} Store Reward Points (Rs. ${pointsEarned}) credited to customer account`, 
         order,
         pointsEarned 
       });

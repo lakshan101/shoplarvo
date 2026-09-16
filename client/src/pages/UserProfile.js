@@ -1,19 +1,25 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { getMyOrdersApi } from '../api/orderApi';
+import { getProfileApi } from '../api/authApi';
 import AddressManager from '../epics/E1_CustomerManagement/AddressManager';
 import OrderTracking from '../epics/E3_ShoppingAndOrders/OrderTracking';
 import InvoiceView from '../epics/E3_ShoppingAndOrders/InvoiceView';
-import { User, MapPin, ShoppingBag, ShieldCheck, Mail, Phone, FileText, Lock, KeyRound, Check, AlertCircle, Edit3, Award, Clock } from 'lucide-react';
+import { 
+  User, MapPin, ShoppingBag, ShieldCheck, Mail, Phone, FileText, Lock, 
+  AlertCircle, Award, Clock, Package, Truck, RefreshCw, Info, X, CheckCircle2 
+} from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 
 export default function UserProfile() {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, updateUserState } = useContext(AuthContext);
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'address', 'security'
+  const [orderSubTab, setOrderSubTab] = useState('ongoing'); // 'ongoing', 'delivered', 'returns'
   const [orders, setOrders] = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
+  const [showRewardModal, setShowRewardModal] = useState(false);
 
   // Phone Edit Form State
   const [primaryPhone, setPrimaryPhone] = useState(user?.phone || '+94 70 555 1212');
@@ -39,6 +45,15 @@ export default function UserProfile() {
     const newOrderFromCheckout = location.state?.newOrder;
 
     if (token) {
+      // Refresh user profile to update Reward Points in real-time
+      getProfileApi(token)
+        .then(res => {
+          if (res.success && res.user) {
+            updateUserState(res.user);
+          }
+        })
+        .catch(() => {});
+
       getMyOrdersApi(token)
         .then(res => {
           let list = res.orders || [];
@@ -59,6 +74,7 @@ export default function UserProfile() {
                 paymentMethod: 'Bank Deposit / Slip Upload',
                 paymentSlipUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400',
                 status: 'Payment Pending (Slip Uploaded)',
+                returnStatus: 'None',
                 trackingNumber: 'SH-TRK-98742',
                 createdAt: new Date(),
                 orderItems: [{ title: 'Urban Cyberpunk Oversized Hoodie', quantity: 1, price: 85.00, selectedSize: 'L', selectedColor: 'Black', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600' }]
@@ -82,6 +98,7 @@ export default function UserProfile() {
                 paymentMethod: 'Bank Deposit / Slip Upload',
                 paymentSlipUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400',
                 status: 'Payment Pending (Slip Uploaded)',
+                returnStatus: 'None',
                 trackingNumber: 'SH-TRK-98742',
                 createdAt: new Date(),
                 orderItems: [{ title: 'Urban Cyberpunk Oversized Hoodie', quantity: 1, price: 85.00, selectedSize: 'L', selectedColor: 'Black', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600' }]
@@ -104,6 +121,7 @@ export default function UserProfile() {
             paymentMethod: 'Bank Deposit / Slip Upload',
             paymentSlipUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400',
             status: 'Payment Pending (Slip Uploaded)',
+            returnStatus: 'None',
             trackingNumber: 'SH-TRK-98742',
             createdAt: new Date(),
             orderItems: [{ title: 'Urban Cyberpunk Oversized Hoodie', quantity: 1, price: 85.00, selectedSize: 'L', selectedColor: 'Black', image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600' }]
@@ -112,7 +130,7 @@ export default function UserProfile() {
       }
       setLoadingOrders(false);
     }
-  }, [token, location, user]);
+  }, [token, location]);
 
   const handleUpdatePhones = async (e) => {
     e.preventDefault();
@@ -181,6 +199,15 @@ export default function UserProfile() {
     );
   }
 
+  // Categorize orders into distinct package tabs
+  const ongoingOrders = orders.filter(o => o.status !== 'Successfully Delivered' && (!o.returnStatus || o.returnStatus === 'None'));
+  const deliveredOrders = orders.filter(o => o.status === 'Successfully Delivered' && (!o.returnStatus || o.returnStatus === 'None'));
+  const returnOrders = orders.filter(o => o.returnStatus && o.returnStatus !== 'None');
+
+  const currentDisplayedOrders = 
+    orderSubTab === 'ongoing' ? ongoingOrders :
+    orderSubTab === 'delivered' ? deliveredOrders : returnOrders;
+
   return (
     <div className="space-y-8 animate-fade-in py-4 w-full text-slate-900">
       
@@ -203,13 +230,20 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Customer Reward Points Credit Balance Counter */}
-        <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-center md:text-right shrink-0">
+        {/* Customer Reward Points Credit Balance Counter (Interactive Modal Trigger) */}
+        <div 
+          onClick={() => setShowRewardModal(true)}
+          className="p-5 rounded-2xl bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-200 text-center md:text-right shrink-0 cursor-pointer transition-all shadow-sm group relative"
+        >
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-700 block flex items-center justify-center md:justify-end gap-1">
-            <Award className="w-4 h-4 text-indigo-600" /> Account Store Reward Points Balance
+            <Award className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" /> ACCOUNT STORE REWARD POINTS BALANCE
+            <Info className="w-3.5 h-3.5 text-indigo-400 ml-1" />
           </span>
-          <span className="text-2xl font-black text-indigo-900 mt-1 block">
-            {user.rewardPoints || 120} <span className="text-xs font-bold text-indigo-600">Points Credit</span>
+          <span className="text-3xl font-black text-indigo-900 mt-1 block">
+            {user.rewardPoints || 0} <span className="text-xs font-bold text-indigo-600">Points Credit</span>
+          </span>
+          <span className="text-[10px] text-indigo-500 font-semibold block mt-1 hover:underline">
+            Click to view Reward Points rules & details →
           </span>
         </div>
       </div>
@@ -245,22 +279,55 @@ export default function UserProfile() {
       {/* Interface Tab 1: Customer Order History & Tracking Interface */}
       {activeTab === 'orders' && (
         <div className="glass-card p-8 rounded-3xl border border-slate-200 bg-white space-y-6 shadow-sm">
-          <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <ShoppingBag className="w-5 h-5 text-slate-900" /> Customer Order History & Live Tracking Interface
-            </h2>
-            <span className="text-xs text-slate-500 font-medium">Real-Time 4-Stage Courier Dispatch Tracker</span>
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 pb-4">
+            <div>
+              <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-slate-900" /> Order History & Dispatch Tracker
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Categorized by courier delivery stages and return claims</p>
+            </div>
+
+            {/* Categorized Package Sub-Tabs */}
+            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+              <button
+                onClick={() => setOrderSubTab('ongoing')}
+                className={`px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                  orderSubTab === 'ongoing' ? 'bg-slate-900 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Package className="w-3.5 h-3.5" /> Ongoing ({ongoingOrders.length})
+              </button>
+              <button
+                onClick={() => setOrderSubTab('delivered')}
+                className={`px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                  orderSubTab === 'delivered' ? 'bg-emerald-700 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Truck className="w-3.5 h-3.5" /> Delivered ({deliveredOrders.length})
+              </button>
+              <button
+                onClick={() => setOrderSubTab('returns')}
+                className={`px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                  orderSubTab === 'returns' ? 'bg-purple-700 text-white shadow' : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Returned Items ({returnOrders.length})
+              </button>
+            </div>
           </div>
 
           {loadingOrders ? (
             <div className="text-center py-8 text-xs text-slate-400">Loading your order history...</div>
-          ) : orders.length === 0 ? (
+          ) : currentDisplayedOrders.length === 0 ? (
             <div className="text-center py-12 text-xs text-slate-500 bg-slate-50 rounded-2xl border border-slate-200">
-              You haven't placed any apparel orders yet.
+              {orderSubTab === 'ongoing' && "No ongoing packages currently in transit."}
+              {orderSubTab === 'delivered' && "No delivered packages found in your history."}
+              {orderSubTab === 'returns' && "No returned packages or active refund claims."}
             </div>
           ) : (
             <div className="space-y-6">
-              {orders.map((ord) => (
+              {currentDisplayedOrders.map((ord) => (
                 <div key={ord._id} className="space-y-4">
                   {/* Live Stepper Component */}
                   <OrderTracking order={ord} />
@@ -268,7 +335,7 @@ export default function UserProfile() {
                   {/* Itemized Order Details & Invoice Trigger */}
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs gap-4">
                     <div>
-                      <p className="font-extrabold text-slate-900 text-sm">Total Paid: ${ord.totalAmount?.toFixed(2)}</p>
+                      <p className="font-extrabold text-slate-900 text-sm">Total Paid: Rs. {ord.totalAmount?.toFixed(2)}</p>
                       <p className="text-slate-500">Payment Gateway: {ord.paymentMethod || 'Bank Deposit / Slip Upload'}</p>
                     </div>
                     <button 
@@ -375,6 +442,71 @@ export default function UserProfile() {
                 </button>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Reward Points Explanation Modal */}
+      {showRewardModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-fade-in">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 relative text-xs text-slate-800">
+            <button 
+              onClick={() => setShowRewardModal(false)}
+              className="absolute top-6 right-6 p-2 text-slate-400 hover:text-slate-900 rounded-full hover:bg-slate-100 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 text-[10px] font-extrabold uppercase tracking-wider">
+                <Award className="w-4 h-4 text-indigo-600" /> STORE REWARD POINTS POLICY
+              </div>
+              <h3 className="text-xl font-extrabold text-slate-900">How Reward Points & Refunds Work</h3>
+              <p className="text-slate-500 leading-relaxed">
+                ShopLarvo provides a seamless 1:1 Store Reward Point credit policy for returned fashion items.
+              </p>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <div className="p-3.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-extrabold text-indigo-950 text-xs">1:1 Returned Item Credit (1 Rupee = 1 Point)</h4>
+                  <p className="text-indigo-800/80 text-[11px] mt-0.5 leading-normal">
+                    When an Admin approves your returned package refund, <strong>100% of the returned item value is credited to your Reward Points balance</strong>. For example, returning an item worth <strong>Rs. 85.00</strong> credits <strong>85 Points</strong> directly into your account!
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-extrabold text-emerald-950 text-xs">New Customer Accounts Start at 0 Points</h4>
+                  <p className="text-emerald-800/80 text-[11px] mt-0.5 leading-normal">
+                    All newly registered accounts start with <strong>0 Reward Points</strong>. Points accumulate automatically as your return item refunds are processed by management.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-slate-700 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-extrabold text-slate-900 text-xs">Redeem Points for Future Clothing Orders</h4>
+                  <p className="text-slate-600 text-[11px] mt-0.5 leading-normal">
+                    Use your accumulated store reward points during checkout to get instant discounts on future apparel purchases.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <button 
+                onClick={() => setShowRewardModal(false)}
+                className="w-full py-3 rounded-2xl bg-slate-900 text-white font-extrabold uppercase tracking-wider text-xs shadow-lg hover:bg-indigo-600 transition-colors"
+              >
+                GOT IT, CLOSE INFO
+              </button>
+            </div>
           </div>
         </div>
       )}

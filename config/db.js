@@ -20,8 +20,8 @@ const connectDB = async () => {
     console.log(`[MongoDB Atlas] Successfully connected to host: ${conn.connection.host}`);
     return conn;
   } catch (error) {
-    console.warn(`[MongoDB Notice] Live database connection warning (${error.message}).`);
-    throw error;
+    console.warn(`[MongoDB Notice] Connection attempt warning: ${error.message}`);
+    return null;
   }
 };
 

@@ -92,13 +92,13 @@ export default function ProductQuickViewModal({ product, onClose }) {
             <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{product.title}</h2>
 
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-extrabold text-slate-900">${product.price.toFixed(2)}</span>
+              <span className="text-3xl font-extrabold text-slate-900">Rs. {product.price.toFixed(2)}</span>
               {product.originalPrice && (
-                <span className="text-base text-slate-400 line-through">${product.originalPrice.toFixed(2)}</span>
+                <span className="text-base text-slate-400 line-through">Rs. {product.originalPrice.toFixed(2)}</span>
               )}
               {product.originalPrice && (
                 <span className="text-xs font-bold text-blue-700 px-2.5 py-0.5 rounded bg-blue-50 border border-blue-200">
-                  SAVE ${(product.originalPrice - product.price).toFixed(2)}
+                  SAVE Rs. {(product.originalPrice - product.price).toFixed(2)}
                 </span>
               )}
             </div>

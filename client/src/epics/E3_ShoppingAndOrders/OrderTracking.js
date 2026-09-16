@@ -157,7 +157,7 @@ export default function OrderTracking({ order, onReturnSubmitted }) {
       {order.returnStatus === 'Approved & Points Credited' && (
         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center gap-2">
           <Award className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>🎉 Return Approved! Store Reward Points (+{Math.round((order.totalAmount || 0) * 10)} Pts) have been credited to your account for future purchases!</span>
+          <span>🎉 Return Approved! Store Reward Points (+{Math.round(order.totalAmount || 0)} Pts) have been credited to your account for future purchases!</span>
         </div>
       )}
 

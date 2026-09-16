@@ -398,11 +398,11 @@ export default function CheckoutStepper() {
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
             <div className="flex justify-between text-slate-600">
               <span>Cart Subtotal</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>Rs. {cartTotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-blue-700 font-bold">
               <span>25% Promo Discount</span>
-              <span>-${discountAmount.toFixed(2)}</span>
+              <span>-Rs. {discountAmount.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-slate-600">
               <span>Shipping Fee</span>
@@ -410,7 +410,7 @@ export default function CheckoutStepper() {
             </div>
             <div className="flex justify-between text-base font-extrabold text-slate-900 pt-2 border-t border-slate-200">
               <span>Final Total</span>
-              <span>${finalTotal.toFixed(2)}</span>
+              <span>Rs. {finalTotal.toFixed(2)}</span>
             </div>
           </div>
 

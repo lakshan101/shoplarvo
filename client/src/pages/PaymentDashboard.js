@@ -221,7 +221,7 @@ export default function PaymentDashboard() {
 
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-slate-500">Total Payment Amount:</span>
-                  <span className="text-2xl font-black text-emerald-800">${ord.totalAmount?.toFixed(2)}</span>
+                  <span className="text-2xl font-black text-emerald-800">Rs. {ord.totalAmount?.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -244,7 +244,7 @@ export default function PaymentDashboard() {
                     {ord.orderItems?.map((it, idx) => (
                       <div key={idx} className="flex justify-between items-center text-[11px] border-b border-slate-200/60 pb-1">
                         <span className="font-semibold text-slate-800">{it.title} (Size: {it.selectedSize})</span>
-                        <span className="font-bold text-slate-900">x{it.quantity} (${((it.price || 0) * it.quantity).toFixed(2)})</span>
+                        <span className="font-bold text-slate-900">x{it.quantity} (Rs. {((it.price || 0) * it.quantity).toFixed(2)})</span>
                       </div>
                     ))}
                   </div>
@@ -253,36 +253,38 @@ export default function PaymentDashboard() {
                 {/* Bank Slip Receipt Inspection */}
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2 text-center">
                   <h4 className="font-extrabold text-slate-900 uppercase tracking-wider text-[11px] text-left">Attached Bank Payment Slip</h4>
-                  
                   {ord.paymentSlipUrl ? (
                     <div className="space-y-2">
                       <img 
                         src={ord.paymentSlipUrl} 
-                        alt="Bank Slip Receipt" 
-                        onClick={() => setSelectedSlipUrl(ord.paymentSlipUrl)}
-                        className="max-h-24 mx-auto rounded-xl object-contain border border-slate-300 shadow-sm cursor-pointer hover:scale-105 transition-transform"
+                        alt="Customer bank deposit slip" 
+                        onClick={() => setSelectedSlipOrder(ord)}
+                        className="h-28 mx-auto rounded-xl object-contain border border-slate-200 cursor-pointer hover:scale-105 transition-transform"
                       />
-                      <button
-                        onClick={() => setSelectedSlipUrl(ord.paymentSlipUrl)}
-                        className="text-indigo-600 font-bold text-[11px] underline flex items-center justify-center gap-1 mx-auto"
+                      <button 
+                        onClick={() => setSelectedSlipOrder(ord)}
+                        className="text-[10px] text-blue-600 font-bold hover:underline block mx-auto"
                       >
-                        <Eye className="w-3.5 h-3.5" /> Inspect Full Size Slip
+                        Click to expand receipt image
                       </button>
                     </div>
                   ) : (
-                    <div className="py-6 text-slate-400 italic">No Bank Slip Uploaded</div>
+                    <div className="p-4 rounded-xl bg-amber-50 text-amber-800 font-bold text-[11px]">
+                      No slip attached yet
+                    </div>
                   )}
                 </div>
 
               </div>
 
-              {/* Payment Manager Approval Action Bar */}
-              {ord.status === 'Payment Pending (Slip Uploaded)' && (
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 pt-3">
-                  <span className="text-xs font-bold text-emerald-950">
-                    Verify that the bank slip receipt matches total amount (${ord.totalAmount?.toFixed(2)}):
+              {/* Approval Actions Bar */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-100 p-4 rounded-2xl border border-slate-200 gap-4">
+                <div className="flex items-center gap-2 text-slate-700 font-medium">
+                  <AlertCircle className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span>
+                    Verify that the bank slip receipt matches total amount (Rs. {ord.totalAmount?.toFixed(2)}):
                   </span>
-
+                </div>
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
                       onClick={() => handleApprovePayment(ord._id, 'Approve')}
@@ -298,7 +300,6 @@ export default function PaymentDashboard() {
                     </button>
                   </div>
                 </div>
-              )}
 
             </div>
           ))}
